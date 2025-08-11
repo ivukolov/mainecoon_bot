@@ -2,8 +2,13 @@ from enum import Enum
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 class Settings(Enum):
+    DEBUG: bool = os.getenv("DEBUG",)
     # Telegram.
     BOT_TOKEN: str  = os.getenv("BOT_TOKEN")
     ADMIN_IDS: list = os.getenv("ADMIN_IDS").split(",")
