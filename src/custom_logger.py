@@ -7,6 +7,7 @@ from config import Settings
 
 
 class TelegramHandler(logging.Handler):
+    """Отправка логов администратору тг канала."""
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
@@ -46,6 +47,7 @@ class BotLogger:
 
 
     def manage_handlers(self, handlers: List[logging.Handler]):
+        """Функция добавления кастомных хэндлеров в проект."""
         for handler in handlers:
             handler.setFormatter(self.formatter)
             self.logger.addHandler(handler)
