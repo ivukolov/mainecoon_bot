@@ -1,7 +1,6 @@
-from app.handlers.start import cmd_start, blog_menu
+from handlers.start import command_start_router
 
 
 routers = (
-    cmd_start,
-    blog_menu,
+    command_start_router
 )
