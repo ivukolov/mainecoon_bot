@@ -7,6 +7,9 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    entrypoint: bash -c "python main.py"
+    volumes:
+      - ./logs/:/app/logs/
     depends_on:
       - postgres
       - redis
@@ -20,7 +23,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5433"
 
   redis:
     image: redis:7-alpine
