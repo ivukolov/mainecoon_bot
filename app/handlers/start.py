@@ -1,13 +1,19 @@
+from logging import getLogger
+
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 
 from keyboards.main_menu import blog_categories_kb, main_menu_kb
 
+
 command_start_router = Router()
+
+logger = getLogger(__name__)
 
 @command_start_router.message(CommandStart())
 async def cmd_start(message: Message):
+    raise ZeroDivisionError
     await message.answer(
         "Привет! Я — бот канала «Мейн-куны в Воронеже».\n\n"
         "📌 Выбери раздел:",
