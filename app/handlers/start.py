@@ -13,7 +13,6 @@ logger = getLogger(__name__)
 
 @command_start_router.message(CommandStart())
 async def cmd_start(message: Message):
-    raise ZeroDivisionError
     await message.answer(
         "Привет! Я — бот канала «Мейн-куны в Воронеже».\n\n"
         "📌 Выбери раздел:",
