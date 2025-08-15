@@ -8,6 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.exceptions import TelegramServerError, TelegramNotFound
 
+from middlewares.db import SafeDatabaseMiddleware
 from config import settings
 from handlers import routers, command_start_router
 
@@ -20,7 +21,8 @@ async def main():
     dp = Dispatcher(storage=storage)
     # for router in routers:
     #     dp.include_router(router)
-    dp.include_router(command_start_router)
+    dp.update.middleware(SafeDatabaseMiddleware)
+    dp.include_routers(routers)
     try:
         logger.info("Запуск бота")
         await dp.start_polling(bot)
