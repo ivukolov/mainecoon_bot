@@ -82,7 +82,7 @@ LOGGING_CONFIG = {
     # Список модулей проекта, для детальной настройки.
     'loggers': {
         '': {  # root logger
-            'handlers': ['console', 'file_debug'],
+            'handlers': ['console', 'file_error'],
             'level': 'INFO',
         },
         'handlers': {
@@ -90,8 +90,8 @@ LOGGING_CONFIG = {
             'level': 'ERROR',
             'propagate': True,
         },
-        'config': {
-            'handlers': ['console', 'file_error'],
+        'aiogram.router': {
+            'handlers': ['console', 'file_debug'],
             'level': 'ERROR',
             'propagate': False,
         },
