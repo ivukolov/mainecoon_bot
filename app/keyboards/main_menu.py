@@ -1,22 +1,24 @@
+from typing import List, Union, Tuple, Optional
+
 from aiogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
     InlineKeyboardMarkup,
     InlineKeyboardButton
 )
-from typing import List, Union, Tuple, Optional
 
+from app.keyboards.lexicon import MainMenu, ActionButtons
 
 # --- Reply Keyboards (обычные кнопки под полем ввода) ---
 
 def main_menu_kb() -> ReplyKeyboardMarkup:
     """Главное меню бота"""
     buttons = [
-        [KeyboardButton(text="🐾 Блог (рубрики)")],
-        [KeyboardButton(text="🛍 Партнёры и магазины")],
-        [KeyboardButton(text="📢 Объявления (купить/продать)")],
-        [KeyboardButton(text="🎉 Интерактивы (конкурсы)")],
-        [KeyboardButton(text="ℹ️ О канале")]
+        [KeyboardButton(text=MainMenu.BLOG)],
+        [KeyboardButton(text=MainMenu.PARTNERS)],
+        [KeyboardButton(text=MainMenu.ADS)],
+        [KeyboardButton(text=MainMenu.INTERACTIVITY)],
+        [KeyboardButton(text=MainMenu.ABOUT)]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
@@ -24,7 +26,7 @@ def main_menu_kb() -> ReplyKeyboardMarkup:
 def cancel_kb() -> ReplyKeyboardMarkup:
     """Клавиатура для отмены действия"""
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="❌ Отмена")]],
+        keyboard=[[KeyboardButton(text=ActionButtons.CANCEL)]],
         resize_keyboard=True,
         one_time_keyboard=True
     )
