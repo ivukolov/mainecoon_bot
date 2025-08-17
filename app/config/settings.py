@@ -10,17 +10,28 @@ load_dotenv(override=True)
 
 
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
+ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
 # Telegram.
 BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",)
 ADMINS: Final[tuple] = tuple(os.getenv("ADMIN", ', ').split(","))
 CHANNEL_ID: Final[str] = os.getenv("CHANNEL_ID")
 GROUP_ID: Final[str] = os.getenv("GROUP_ID")
+## DB.
+# ENGINE.
+DB_ENGINE = "sqlite+aiosqlite:///./bot.db"
 # Postgres.
 POSTGRES_HOST: Final[str] = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT: Final[str] = os.getenv("POSTGRES_PORT")
 POSTGRES_DB: Final[str] = os.getenv("POSTGRES_DB")
 POSTGRES_USER: Final[str] = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD: Final[str] = os.getenv("POSTGRES_PASSWORD")
+# Models
+# User
+USER_INFO_LENGTH: Final[int] = 100
+# Tag
+TAG_NAME_LENGTH: Final[int] = 20
+TAG_EMOJI_LENGTH: Final[int] = 14
+
 # Redis.
 REDIS_HOST: Final[str] = '127.0.0.1'#os.getenv("REDIS_HOST")
 REDIS_PORT: Final[str] = os.getenv("REDIS_PORT")
@@ -35,7 +46,7 @@ LOGS_DIR: Final[Path] = ROOT_DIR / 'logs'
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 LOG_MAX_SIZE: Final[int] = 5 * 1024 * 1024 # Размер лога 5 мб.
 LOG_BACKUP_COUNT: Final[int] = 3 # Количество итераций лога.
-ENCODING: Final[str] = "utf-8"
+LOG_ENCODING: Final[str] = "utf-8"
 LOGGING_CONFIG = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -75,7 +86,7 @@ LOGGING_CONFIG = {
             'level': 'ERROR',
             'maxBytes': LOG_MAX_SIZE,  # 10 MB
             'backupCount': LOG_BACKUP_COUNT,
-            'encoding': ENCODING,
+            'encoding': LOG_ENCODING,
             'mode': 'a'
         },
     },
