@@ -4,33 +4,22 @@ from abc import ABC
 from aiogram import types
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from contextlib import asynccontextmanager
-from app.database.db import get_db
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 logger = logging.getLogger(__name__)
 
 
-class SafeDatabaseMiddleware(BaseMiddleware, ABC):
-    def __init__(self):
-        super().__init__()
+class DatabaseMiddleware(BaseMiddleware):
+    """Оптимизированный middleware с предварительно созданной фабрикой сессий"""
+    def __init__(self, session_pool: async_sessionmaker[AsyncSession]):
+        self.session_pool = session_pool  # Готовая фабрика сессий
 
-    async def on_pre_process_message(self, message: types.Message, data: dict):
-        try:
-            data['db'] = next(get_db())
-        except Exception as e:
-            logger.error(f"Database connection error: {e}")
-            data['db'] = None
-
-    async def on_post_process_message(self, message: types.Message, results, data: dict):
-        if 'db' in data and data['db'] is not None:
+    async def __call__(self, handler, event, data):
+        async with self.session_pool() as session:  # 1 вызов фабрики
+            data["db"] = session
             try:
-                data['db'].close()
-            except Exception as e:
-                logger.error(f"Error closing database connection: {e}")
-
-    async def on_process_error(self, update: types.Update, error: Exception, data: dict):
-        if 'db' in data and data['db'] is not None:
-            try:
-                data['db'].rollback()
-                data['db'].close()
-            except Exception as e:
-                logger.error(f"Error during error handling: {e}")
+                return await handler(event, data)
+            except Exception:
+                await session.rollback()
+                logger.error('Ошибка взаимодействия с базой данных', exc_info=True)
+                raise
