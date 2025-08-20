@@ -1,9 +1,6 @@
 import logging
-from abc import ABC
 
-from aiogram import types
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
-from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 logger = logging.getLogger(__name__)
