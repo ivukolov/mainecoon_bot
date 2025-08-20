@@ -43,3 +43,6 @@ class User(BaseModel):
     #     server_default=expression.text("(now() AT TIME ZONE 'UTC'::text)"),
     # )
     pm_active: Mapped[bool] = mapped_column(nullable=False, server_default=expression.false())
+
+    def is_admin(self):
+        return self.role == UserRole.ADMIN
