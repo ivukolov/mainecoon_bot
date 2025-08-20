@@ -13,7 +13,8 @@ from sqladmin import Admin
 
 from web.admin import app as fastapi_app, UserAdmin
 from database.db import session_factory, engine
-from middlewares.db import DatabaseMiddleware
+from middlewares import DatabaseMiddleware
+from middlewares import BotMiddleware
 from config import settings
 from handlers import routers, command_start_router
 
@@ -45,6 +46,7 @@ async def main():
     # for router in routers:
     #     dp.include_router(router)
     dp.update.middleware(DatabaseMiddleware(session_factory))
+    dp.update.middleware(BotMiddleware(bot))
     dp.include_routers(routers)
     try:
         async with asyncio.TaskGroup() as tg:
