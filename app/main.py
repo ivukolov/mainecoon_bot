@@ -13,8 +13,8 @@ from sqladmin import Admin
 
 from web.admin import app as fastapi_app, UserAdmin
 from database.db import session_factory, engine
-from middlewares import DatabaseMiddleware
-from middlewares import BotMiddleware
+from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddleware
+from app.utils.parsers import TeletonClient
 from config import settings
 from handlers import routers, command_start_router
 
@@ -40,6 +40,10 @@ async def main():
     app = fastapi_app
     admin = Admin(app, engine)
     admin.add_view(UserAdmin)
+    # Инициализация клиента
+    teletone = TeletonClient()
+    # Проверка сессии в случае ошибки автоизация.
+    await teletone.connection_check()
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     storage = RedisStorage.from_url(settings.REDIS_STORAGE)
     dp = Dispatcher(storage=storage)
@@ -47,6 +51,7 @@ async def main():
     #     dp.include_router(router)
     dp.update.middleware(DatabaseMiddleware(session_factory))
     dp.update.middleware(BotMiddleware(bot))
+    dp.update.middleware(TeletonClientMiddleware(teletone))
     dp.include_routers(routers)
     try:
         async with asyncio.TaskGroup() as tg:

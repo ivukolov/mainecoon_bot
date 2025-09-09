@@ -12,10 +12,14 @@ load_dotenv(override=True)
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
 ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
 # Telegram.
-BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",)
+BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, получается у @botfather
 ADMINS: Final[tuple] = tuple(os.getenv("ADMIN", ', ').split(","))
 CHANNEL_ID: Final[str] = os.getenv("CHANNEL_ID")
 GROUP_ID: Final[str] = os.getenv("GROUP_ID")
+TG_API_ID: Final[str] = os.getenv("TG_API_ID")
+TG_API_HASH: Final[str] = os.getenv("TG_API_HASH")
+TG_PHONE: Final[str] = os.getenv("TG_PHONE")
+TG_SESSION_RECREATE_TIMEOUT: Final[int] = 3 # Время для перезапуска сессии в случае Секунды
 ## DB.
 # ENGINE.
 DB_ENGINE = "sqlite+aiosqlite:///./bot.db"
@@ -93,18 +97,24 @@ LOGGING_CONFIG = {
     # Список модулей проекта, для детальной настройки.
     'loggers': {
         '': {  # root logger
-            'handlers': ['console', 'file_error'],
+            'handlers': ['console', 'file_error', 'file_info'],
             'level': 'INFO',
+            'propagate': False,
         },
         'handlers': {
             'handlers': ['console', 'file_error'],
             'level': 'ERROR',
-            'propagate': True,
+            'propagate': False,
         },
         'aiogram.router': {
             'handlers': ['console', 'file_debug'],
             'level': 'ERROR',
             'propagate': False,
         },
+        'utils': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'INFO',
+            'propagate': False,
+        }
     },
 }

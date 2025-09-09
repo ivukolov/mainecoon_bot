@@ -71,6 +71,7 @@ def pagination_kb(
         )
 
     if current_page < total_pages:
+        print(f"{prefix}_next_{current_page}")
         buttons.append(
             InlineKeyboardButton(
                 text="Вперед ▶️",
