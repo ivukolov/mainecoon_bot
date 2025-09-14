@@ -37,7 +37,7 @@ class User(BaseModel):
     username: Mapped[str] = mapped_column(
         String(settings.USERNAME_LENGTH), nullable=True, unique=False
     )
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=True,)
     password: Mapped[str] = mapped_column(String(255), nullable=True, unique=False)
     first_name: Mapped[str] = mapped_column(
         String(settings.USER_FIRST_NAME_LENGTH), nullable=True, unique=False
