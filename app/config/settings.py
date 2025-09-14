@@ -8,12 +8,11 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-
+PROJECT_NAME: Final[str] = 'mainecoon_bot'
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
 ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
 # Telegram.
 BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, получается у @botfather
-ADMINS: Final[tuple] = tuple(os.getenv("ADMIN", ', ').split(","))
 CHANNEL_ID: Final[str] = os.getenv("CHANNEL_ID")
 GROUP_ID: Final[str] = os.getenv("GROUP_ID")
 TG_API_ID: Final[str] = os.getenv("TG_API_ID")
@@ -31,7 +30,11 @@ POSTGRES_USER: Final[str] = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD: Final[str] = os.getenv("POSTGRES_PASSWORD")
 # Models
 # User
+USERNAME_LENGTH: Final[int] = 100
 USER_INFO_LENGTH: Final[int] = 100
+USER_FIRST_NAME_LENGTH: Final[int] = 100
+USER_LAST_NAME_LENGTH: Final[int] = 100
+LANG_CODE_LENGTH: Final[int] = 10
 # Tag
 TAG_NAME_LENGTH: Final[int] = 20
 TAG_EMOJI_LENGTH: Final[int] = 14
@@ -45,6 +48,13 @@ YOOKASSA_SHOP_ID: Final[str ]= os.getenv("YOOKASSA_SHOP_ID")
 YOOKASSA_SECRET_KEY: Final[str] = os.getenv("YOOKASSA_SECRET_KEY")
 # Folders.
 ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent
+# Media
+MEDIA: Final[str] = "media"
+MEDIA_ROOT: Final[Path] = ROOT_DIR / MEDIA
+IMAGES: Final[str] = "images"
+IMAGES_ROOT: Final[Path] = MEDIA_ROOT / IMAGES
+VIDEOS: Final[str] = "videos"
+VIDEOS_ROOT: Final[Path] = MEDIA_ROOT / VIDEOS
 # Logs
 LOGS_DIR: Final[Path] = ROOT_DIR / 'logs'
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
