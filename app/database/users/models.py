@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Enum, String, Unicode, BigInteger
+from sqlalchemy import Enum, String, Unicode, BigInteger, Text
 from sqlalchemy.dialects.postgresql import CITEXT, TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
@@ -60,3 +60,7 @@ class User(BaseModel):
 
     def __str__(self) -> str:
         return f'id пользователя:{self.id}, role: {self.role}'
+
+class TelegramSession(BaseModel):
+    name: Mapped[str] = mapped_column(Text, nullable=False, unique=True, comment='Сообщение из поста')
+    hash: Mapped[str] = mapped_column(Text, nullable=False, unique=True, comment='Хэш сессии')
