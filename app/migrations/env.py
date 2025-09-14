@@ -7,8 +7,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from database.users.models import User
-from database.blog.models import Tag
+from database import User, Post, Category, Tag
 from core.models import BaseModel
 from database.db import engine
 from config import settings
