@@ -5,7 +5,7 @@ from sqladmin import ModelView, Admin
 
 from database.db import get_db, engine
 from database.users.models import User
-from app.web.views import UserAdmin, TagAdmin,CategoryAdmin
+from app.web.views import UserAdmin, TagAdmin, CategoryAdmin, PostAdmin
 
 def setup_admin_panel(app):
     admin = Admin(
@@ -21,4 +21,5 @@ def setup_admin_panel(app):
     admin.add_view(UserAdmin)
     admin.add_view(TagAdmin)
     admin.add_view(CategoryAdmin)
+    admin.add_view(PostAdmin)
     return admin
