@@ -20,7 +20,7 @@ class MediaType(StrEnum):
 post_tag_association = Table(
     'post_tag_association',
     BaseModel.metadata,
-    Column('post_id', Integer, ForeignKey('posts.post_id', ondelete='CASCADE'), primary_key=True),
+    Column('post_id', Integer, ForeignKey('posts.id', ondelete='CASCADE'), primary_key=True),
     Column('tag_id', Integer, ForeignKey('tags.id', ondelete='CASCADE'), primary_key=True),
 )
 
@@ -71,7 +71,7 @@ class Category(BaseModel):
 class Post(BaseModel):
     __tablename__ = "posts"
 
-    post_id: Mapped[int] = mapped_column(
+    id: Mapped[int] = mapped_column(
         Integer, primary_key=True, nullable=False, comment='id поста из telegram'
     )
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True), comment='Дата создания поста.')
