@@ -1,24 +1,36 @@
 from sqladmin import ModelView
 
 from database import User, Post, Category, Tag
+from sqlalchemy.orm import declared_attr
 
 
-class UserAdmin(ModelView, model=User):
+class PostExcludeMixin:
+    form_excluded_columns = ['posts']
+
+
+class UserAdmin(PostExcludeMixin, ModelView, model=User):
     name = "Пользователь"
     name_plural = "Пользователи"
-    column_list = [User.id, User.role, User.info]
+    column_list = ['id', 'is_active', 'first_name', 'last_name','role', 'info']
     can_export = True
 
 
-class CategoryAdmin(ModelView, model=Category):
+class CategoryAdmin(PostExcludeMixin, ModelView, model=Category):
     name = "Категория"
     name_plural = "Категории"
-    column_list = [Category.id, Category.name, Category.slug]
+    column_list = ['id', 'name', 'slug']
     can_export = True
 
 
-class TagAdmin(ModelView, model=Tag):
+class TagAdmin(PostExcludeMixin, ModelView, model=Tag):
     name = "Тэг"
     name_plural = "Тэги"
-    column_list = [Tag.id, Tag.name, Tag.emoji]
+    column_list = ['id', 'name', 'emoji']
+    can_export = True
+
+
+class PostAdmin(ModelView, model=Post):
+    name = "Пост"
+    name_plural = "Посты"
+    column_list = ['id', 'title',]
     can_export = True
