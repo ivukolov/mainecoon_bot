@@ -11,8 +11,7 @@ import uuid
 from telethon.sync import TelegramClient
 
 from telethon.tl.functions.messages import GetDialogsRequest
-from telethon.tl.types import InputPeerEmpty
-from telethon.tl.types import InputPeerChannel
+from telethon.tl.types import InputPeerEmpty, Photo, Message
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.tl.types import PeerChannel
 from telethon.sessions import Session, StringSession
@@ -38,18 +37,6 @@ class TeletonClient:
         self.session_file: Path = Path('session_config.json')
         self.client: Optional[TelegramClient] = None
         self.is_connected: bool = False
-
-    # def __enter__(self):
-    #     """Вызывается при входе в контекст"""
-    #     logger.info('получение клиента в рамках контекстного менеджера')
-    #     return self.client  # Возвращаем объект для использования в with
-    #
-    # def __exit__(self, exc_type, exc_val, exc_tb):
-    #     """Вызывается при выходе из контекста"""
-    #     logger.info('Клиент телетон отключен!')
-    #     self.client.disconnect()
-    #     # False - чтобы бросить исключение.
-    #     return False
 
     def __call__(self):
         """Делаем фабрику callable для использования в middleware"""
@@ -118,6 +105,7 @@ class TeletonClient:
         return self.is_connected
 
     async def make_session(self) -> Optional[str]:
+        """Метод поднятия сессии или создания новой!"""
         if not self.is_connected:
             logger.info('Создание новой сессии')
             self.session_name = self.gen_session_name()
@@ -143,6 +131,7 @@ class TeletonClient:
         return await self.make_session()
 
     async def _save_session(self) -> bool:
+        """Метод сохранения сесии"""
         try:
             session_data = {
                 self.session_name: self.client.session.save()
@@ -159,83 +148,23 @@ class TeletonClient:
             return False
         return True
 
-async def main():
-    parser = TeletonClient()
-    await parser.start_client()
 
-if __name__ == '__main__':
-    asyncio.run(main())
+async def get_media_form_message(message):
+    page = 1
+    page_size = 2
+    offset = (page - 1) * page_size
+    parsed_data = tuple
+    if message.photo:
+        print(message.photo)
+    if message.document:
+        print('Документ')
+        print(message.document.mime_type)
+    if message.video:
+        print('Видео')
+        print(message.video.mime_type)
+    print(message.text)
+    return False
 
+# async def parse_messages(messages: list[Message,]):
+#     for message in messages:
 
-
-    # async def __load_session(self):
-    #     """Автоматически загружает сессию если она есть"""
-    #     try:
-    #         if not self.session:
-    #         with open(self.session_file, 'r') as f:
-    #             data = json.load(f)
-    #             client = TelegramClient(
-    #                 StringSession(data['session_string']),
-    #                 self.API_ID,
-    #                 self.API_HASH
-    #             )
-    #             await client.start()
-    #             return client
-
-#     async def session_maker(self):
-#
-#
-# async def pars_test():
-#     all_messages = []
-#     offset_id = 0
-#     limit = 100
-#     total_messages = 0
-#     total_count_limit = 0
-#
-#     client = TelegramClient(StringSession(), api_id, api_hash)
-#     try:
-#         await client.start(phone=phone)
-#
-#         me = await client.get_me()
-#         session_string = client.session.save()
-#         with open('session.json', 'w') as f:
-#             json.dump({'session_string': session_string}, f)
-#         print(me.username)
-#         target_group = -1001573169353
-#         entity = await client.get_entity(target_group)
-#         peer = InputPeerChannel(
-#             channel_id=abs(entity.id),
-#             access_hash=entity.access_hash
-#         )
-#         history = await client(
-#             GetHistoryRequest(
-#                 peer=peer,
-#                 limit=10,
-#                 offset_id=0,
-#                 add_offset=0,
-#                 max_id=0,
-#                 min_id=0,
-#                 hash=0,
-#                 offset_date=None
-#             )
-#         )
-#
-#         # Обрабатываем сообщения
-#         for message in history.messages:
-#             if hasattr(message, 'message') and message.message:
-#                 print(f"{message.date}: {message.message}")
-#
-#     except Exception as e:
-#         print(f"Ошибка: {e}")
-#     finally:
-#         await client.disconnect()
-#     # group_entity = await client.get_entity(settings.GROUP_ID)
-#     # print(group_entity.id)
-#     # peer = InputPeerChannel(
-#     #     channel_id=target_group,  # Берем абсолютное значение
-#     #     access_hash=group_entity.access_hash
-#     # )
-#
-#
-# if __name__ == '__main__':
-#     asyncio.run(pars_test())
