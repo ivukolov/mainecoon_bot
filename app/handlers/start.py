@@ -20,10 +20,11 @@ logger = getLogger(__name__)
 
 @command_start_router.message(CommandStart())
 async def cmd_start(message: Message, db: AsyncSession, bot: Bot, tg_user: User):
-    if tg_user.is_admin():
+    username = tg_user.username if tg_user else message.from_user.username
+    if tg_user and tg_user.is_admin():
         return await message.answer("Привет Босс !", reply_markup=admin_mine_menu_kb())
     return await message.answer(
-        f"Привет {tg_user.id}! Я — бот канала «Мейн-куны в Воронеже».\n\n",
+        f"Привет {username}! Я — бот канала «Мейн-куны в Воронеже».\n\n",
         reply_markup=main_menu_kb()
     )
 
