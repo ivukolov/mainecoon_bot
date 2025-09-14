@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Enum, String, Unicode, BigInteger
 from sqlalchemy.dialects.postgresql import CITEXT, TIMESTAMP
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
 from core.models import BaseModel
@@ -34,15 +34,29 @@ class User(BaseModel):
          f": {', '.join([name.value for name in UserRole])}"
         }
     )
+    username: Mapped[str] = mapped_column(
+        String(settings.USERNAME_LENGTH), nullable=True, unique=False
+    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    password: Mapped[str] = mapped_column(String(255), nullable=True, unique=False)
+    first_name: Mapped[str] = mapped_column(
+        String(settings.USER_FIRST_NAME_LENGTH), nullable=True, unique=False
+    )
+    last_name: Mapped[str] = mapped_column(
+        String(settings.USER_LAST_NAME_LENGTH), nullable=True, unique=False
+    )
+    language_code: Mapped[str] = mapped_column(
+        String(settings.LANG_CODE_LENGTH), nullable=True, unique=False
+    )
     info: Mapped[str] = mapped_column(
         String(settings.USER_INFO_LENGTH), nullable=True, unique=False
     )
-    # registration_datetime: Mapped[datetime] = mapped_column(
-    #     TIMESTAMP(timezone=False, precision=0),
-    #     nullable=False,
-    #     server_default=expression.text("(now() AT TIME ZONE 'UTC'::text)"),
-    # )
-    pm_active: Mapped[bool] = mapped_column(nullable=False, server_default=expression.false())
+    is_active: Mapped[bool] = mapped_column(nullable=False, default=False)
 
-    def is_admin(self):
+    posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
+
+    def is_admin(self) -> bool:
         return self.role == UserRole.ADMIN
+
+    def __str__(self) -> str:
+        return f'id пользователя:{self.id}, role: {self.role}'
