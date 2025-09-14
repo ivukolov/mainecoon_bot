@@ -7,18 +7,35 @@ from aiogram.types import (
     InlineKeyboardButton
 )
 
-from app.keyboards.lexicon import MainMenu, ActionButtons
+from app.keyboards.lexicon import MainMenu, ActionButtons, AdminMenu
 
 # --- Reply Keyboards (обычные кнопки под полем ввода) ---
 
-def main_menu_kb() -> ReplyKeyboardMarkup:
+def main_menu_kb(additional_buttons: list = None) -> ReplyKeyboardMarkup:
     """Главное меню бота"""
+    if not additional_buttons:
+        additional_buttons = []
     buttons = [
         [KeyboardButton(text=MainMenu.BLOG)],
         [KeyboardButton(text=MainMenu.PARTNERS)],
         [KeyboardButton(text=MainMenu.ADS)],
         [KeyboardButton(text=MainMenu.INTERACTIVITY)],
         [KeyboardButton(text=MainMenu.ABOUT)]
+
+    ] + [additional_buttons]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
+
+def admin_mine_menu_kb() -> ReplyKeyboardMarkup:
+    """Главное меню администратора"""
+    return main_menu_kb(additional_buttons=[KeyboardButton(text=MainMenu.ADMIN)])
+
+
+def admin_tools_menu_kb() -> ReplyKeyboardMarkup:
+    """Панель инструемнов администратора"""
+    buttons = [
+        [KeyboardButton(text=AdminMenu.CHEK_POSTS)],
+        [KeyboardButton(text=AdminMenu.PARSE_POSTS)]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
