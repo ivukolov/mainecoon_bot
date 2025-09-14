@@ -1,25 +1,24 @@
-from fastapi import FastAPI, Depends
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqladmin import ModelView
+from sqladmin import ModelView, Admin
 
-from database.db import AsyncSessionLocal
+from database.db import get_db, engine
 from database.users.models import User
+from app.web.views import UserAdmin, TagAdmin,CategoryAdmin
 
-app = FastAPI()
+def setup_admin_panel(app):
+    admin = Admin(
+        app=app,  # Will be set in main.py
+        engine=engine,
+        # authentication_backend=authentication_backend,
+        title="Blog Admin",
+        base_url="/admin",
+        # templates_dir="templates/admin",
+    )
 
-async def get_db():
-    async with AsyncSessionLocal() as session:
-        yield session
-
-@app.get("/users")
-async def get_users(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User))
-    return result.scalars().all()
-
-
-class UserAdmin(ModelView, model=User):
-    name = "Пользователь"
-    name_plural = "Пользователи"
-    column_list = [User.id, User.role, User.info]
-    can_export = True
+    # Register views
+    admin.add_view(UserAdmin)
+    admin.add_view(TagAdmin)
+    admin.add_view(CategoryAdmin)
+    return admin
