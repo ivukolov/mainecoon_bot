@@ -11,7 +11,8 @@ class PostExcludeMixin:
 class UserAdmin(PostExcludeMixin, ModelView, model=User):
     name = "Пользователь"
     name_plural = "Пользователи"
-    column_list = ['id', 'is_active', 'first_name', 'last_name','role', 'info']
+    column_list = ['id', 'is_active', 'first_name', 'last_name', 'role', 'info']
+    form_columns = ['id', 'is_active', 'first_name', 'last_name', 'role', 'info']
     can_export = True
 
 
@@ -32,5 +33,8 @@ class TagAdmin(PostExcludeMixin, ModelView, model=Tag):
 class PostAdmin(ModelView, model=Post):
     name = "Пост"
     name_plural = "Посты"
-    column_list = ['id', 'title',]
+    column_list = ['id', 'title', 'date']
     can_export = True
+    column_sortable_list = ["id", "date"]
+    column_default_sort = [('id', True),]
+    column_searchable_list = ["id", "title"]
