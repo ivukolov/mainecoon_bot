@@ -6,3 +6,4 @@ class UserRole(Enum):
     ADMIN = "ADMIN"
     USER = "USER"
     GUEST = "GUEST"
+    BOT = "BOT"
