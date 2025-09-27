@@ -7,7 +7,8 @@ from aiogram.types import (
     InlineKeyboardButton
 )
 
-from app.keyboards.lexicon import MainMenu, ActionButtons, AdminMenu
+from utils.pagintaions import Pagination
+from keyboards.lexicon import MainMenu, ActionButtons, AdminMenu, KeyboardBlog
 
 # --- Reply Keyboards (обычные кнопки под полем ввода) ---
 
@@ -16,11 +17,11 @@ def main_menu_kb(additional_buttons: list = None) -> ReplyKeyboardMarkup:
     if not additional_buttons:
         additional_buttons = []
     buttons = [
-        [KeyboardButton(text=MainMenu.BLOG)],
-        [KeyboardButton(text=MainMenu.PARTNERS)],
-        [KeyboardButton(text=MainMenu.ADS)],
-        [KeyboardButton(text=MainMenu.INTERACTIVITY)],
-        [KeyboardButton(text=MainMenu.ABOUT)]
+        [KeyboardButton(text=MainMenu.BLOG.value.name)],
+        [KeyboardButton(text=MainMenu.PARTNERS.value.name)],
+        [KeyboardButton(text=MainMenu.ADS.value.name)],
+        [KeyboardButton(text=MainMenu.INTERACTIVITY.value.name)],
+        [KeyboardButton(text=MainMenu.ABOUT.value.name)]
 
     ] + [additional_buttons]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
@@ -28,7 +29,7 @@ def main_menu_kb(additional_buttons: list = None) -> ReplyKeyboardMarkup:
 
 def admin_mine_menu_kb() -> ReplyKeyboardMarkup:
     """Главное меню администратора"""
-    return main_menu_kb(additional_buttons=[KeyboardButton(text=MainMenu.ADMIN)])
+    return main_menu_kb(additional_buttons=[KeyboardButton(text=MainMenu.ADMIN.value.name)])
 
 
 def admin_tools_menu_kb() -> ReplyKeyboardMarkup:
@@ -53,51 +54,17 @@ def cancel_kb() -> ReplyKeyboardMarkup:
 
 def blog_categories_kb() -> InlineKeyboardMarkup:
     """Кнопки рубрик блога"""
-    categories = [
-        ("КотоПсихология 🧠", "blog_psychology"),
-        ("КотоВыставки 🎉", "blog_exhibitions"),
-        ("КотоПитание 🍽", "blog_nutrition"),
-        ("КотоЗдоровье 🏥", "blog_health")
-    ]
-
     buttons = [
-        [InlineKeyboardButton(text=text, callback_data=data)]
-        for text, data in categories
+        [
+            InlineKeyboardButton(
+            text=data.value.name, callback_data=Pagination(
+                action="get", page=1, tag=data.value.tag
+            ).pack()
+        )
+        ]
+        for data in KeyboardBlog
     ]
-
-    # Добавляем кнопку возврата
-    buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_main")])
-
     return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
-def pagination_kb(
-        current_page: int,
-        total_pages: int,
-        prefix: str
-) -> InlineKeyboardMarkup:
-    """Клавиатура пагинации"""
-    buttons = []
-
-    if current_page > 1:
-        buttons.append(
-            InlineKeyboardButton(
-                text="◀️ Назад",
-                callback_data=f"{prefix}_prev_{current_page}"
-            )
-        )
-
-    if current_page < total_pages:
-        print(f"{prefix}_next_{current_page}")
-        buttons.append(
-            InlineKeyboardButton(
-                text="Вперед ▶️",
-                callback_data=f"{prefix}_next_{current_page}"
-            )
-        )
-
-    return InlineKeyboardMarkup(inline_keyboard=[buttons])
-
 
 # def confirm_post_kb(post_id: int) -> InlineKeyboardMarkup:
 #     """Кнопки подтверждения для модерации"""
