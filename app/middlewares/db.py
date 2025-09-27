@@ -15,7 +15,9 @@ class DatabaseMiddleware(BaseMiddleware):
         async with self.session_pool() as session:  # 1 вызов фабрики
             data["db"] = session
             try:
-                return await handler(event, data)
+                result = await handler(event, data)
+                await session.commit()
+                return result
             except Exception:
                 await session.rollback()
                 logger.error('Ошибка взаимодействия с базой данных', exc_info=True)
