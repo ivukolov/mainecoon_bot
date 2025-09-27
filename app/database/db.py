@@ -12,6 +12,18 @@ AsyncSessionLocal = async_sessionmaker(
 )
 session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-async def get_db():
+async def get_db_session():
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()  # Автоматический коммит при успехе
+        except Exception:
+            await session.rollback()  # Роллбэк при ошибке
+            raise
+        finally:
+            await session.close()  # Всегда закрываем сессию
+
+
+async def get_db_session_directly():
+    """Создать сессию напрямую"""
+    return AsyncSessionLocal()
