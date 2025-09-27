@@ -14,6 +14,7 @@ class TeletonClientMiddleware(BaseMiddleware):
 
     async def __call__(self, handler, event, data):
         client = await self.teleton_client()# 1 вызов фабрики
+        client.parse_mode = 'html'
         data["teleton_client"] = client
         try:
             return await handler(event, data)
