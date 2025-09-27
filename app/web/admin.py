@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqladmin import ModelView, Admin
 
-from database.db import get_db, engine
+from database.db import get_db_session, engine
 from database.users.models import User
 from app.web.views import UserAdmin, TagAdmin, CategoryAdmin, PostAdmin
 
