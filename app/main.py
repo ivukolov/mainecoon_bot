@@ -16,7 +16,7 @@ from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddlewa
 from app.utils.parsers import TeletonClient
 from app.web.app import run_fastapi
 from config import settings
-from handlers import routers, command_start_router
+from handlers import routers
 
 logger = getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING_CONFIG)
