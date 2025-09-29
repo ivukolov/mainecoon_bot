@@ -12,6 +12,11 @@ PARTNERS_TAG = '#Партнёры'
 PROJECT_NAME: Final[str] = 'Кото-Вет помощник' # Используется для имени web админки интерфейса
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
 ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
+#Bot user profile используется для создания бота в бд при его первой инициализации.
+BOT_ID = 7714336436
+BOT_FIRST_NAME = "Кото-Вет Помощник"
+BOT_USERNAME = 'CatVetHelperBot'
+BOT_INFO = 'Главный трудяга канала'
 # Telegram.
 BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, получается у @botfather
 CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID")
@@ -76,7 +81,7 @@ LOGGING_CONFIG = {
             'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         },
         'detailed': {
-            'format': '%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s',
+            'format': '%(levelname)s: %(asctime)s %(name)s %(funcName)s %(lineno)d %(message)s',
         },
         'simple': {
             'format': '%(levelname)s - %(message)s',
@@ -85,13 +90,13 @@ LOGGING_CONFIG = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'detailed',
             'level': 'INFO',
         },
         'file_info': {
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOGS_DIR, 'info.log'),
-            'formatter': 'standard',
+            'formatter': 'detailed',
             'level': 'INFO',
         },
         'file_debug': {
