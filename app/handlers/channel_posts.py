@@ -1,37 +1,41 @@
 import typing as t
+from logging import getLogger
+from pprint import pprint
 
 from aiogram import Router, types
 
+from database import User
+
+logger = getLogger(__name__)
+
 channel_listener = Router()
 
-
-
 @channel_listener.channel_post()
-async def handle_channel_post(channel_post: types.Message):
+async def handle_channel_post(message: types.Message):
     """Получение базовой информации о сообщении в канале"""
+    channel_id = message.chat.id
+    channel_username = message.chat.username
+    message_id = message.message_id
+    logger.info(f'Перехвачено сообщение из канала {message.chat.id}')
 
     # Информация о канале (чате)
     channel_info = (
-        f'channel_id: {channel_post.chat.id},\n'
-        f'channel_title: {channel_post.chat.title},\n'
-        f'channel_username: {channel_post.chat.username},\n'
-        f'message_id: {channel_post.message_id},\n'
-        f'date: {channel_post.date},\n'
-        f'text: {channel_post.text},\n'
-        f'caption: {channel_post.caption}\n'
+        f'channel_id: {message.chat.id},\n'
+        f'channel_title: {message.chat.title},\n'
+        f'channel_username: {message.chat.username},\n'
+        f'message_id: {message.message_id},\n'
+        f'date: {message.date},\n'
+        f'text: {message.text},\n'
+        f'content_type: {message.content_type},\n '
+        f'caption: {message.caption}\n'
+        f'media_group_id: {message.media_group_id},\n'
     )
+    print(channel_info)
+    print('____________________________________')
+    if message.text or message.caption:
+        await message.bot.forward_message(-1003179370474, -1003179370474, message.message_id)
 
-    print("Информация о канале:")
-    for key, value in channel_info.items():
-        print(f"{key}: {value}")
-
-    # Попытка получить автора (если есть)
-    if channel_post.author_signature:
-        print(f"Подпись автора: {channel_post.author_signature}")
-
-    if channel_post.sender_chat:
-        print(f"Отправитель (чат): {channel_post.sender_chat.title}")
-    await channel_post.bot.send_message(chat_id=1382354642, text=channel_info)
+    # await channel_post.bot.send_message(chat_id=1382354642, text=channel_info)
 
 
 @channel_listener.edited_channel_post()
