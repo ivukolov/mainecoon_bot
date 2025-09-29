@@ -29,6 +29,7 @@ class MessageType(Enum):
     VOICE = "voice"
     STICKER = "sticker"
     POLL = "poll"
+    ANIMATION = "animation"
 
 @dataclass
 class MessageMetrics:
