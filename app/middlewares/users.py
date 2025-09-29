@@ -5,12 +5,13 @@ from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from sqlalchemy import select
 
 if TYPE_CHECKING:
-    from aiogram.types import TelegramObject, User as TgUser
+    from aiogram.types import TelegramObject, Message, User as TgUser
     from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.users.models import User
 from database.users.roles import UserRole
 from config import settings
+from app.utils.bot_utils import get_bot_user
 
 logger = logging.getLogger(__name__)
 
@@ -26,21 +27,18 @@ class UserMiddleware(BaseMiddleware):
                 user, created = await User.get_or_create(session, id=telegram_user.id, defaults={
                     'first_name': telegram_user.first_name,
                     'last_name': telegram_user.last_name,
-                    'role': UserRole.USER,
+                    'role': UserRole.BOT if telegram_user.is_bot else UserRole.USER,
                     'username': telegram_user.username,
                     'language_code': telegram_user.language_code,
                 })
-                # if created:
-                #     user.first_name = telegram_user.first_name
-                #     user.last_name = telegram_user.last_name
-                #     user.role = UserRole.USER
-                #     user.username = telegram_user.username
                 data["tg_user"] = user
+            else:
+                data["tg_user"] = await get_bot_user(session)
         except Exception:
             logger.error(
                 'Middleware error. Во время получения информации о пользователе возникла ошибка', exc_info=True
             )
-            data["tg_user"] = None
+
 
 
         return await handler(event, data)
