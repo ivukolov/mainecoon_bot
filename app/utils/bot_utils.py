@@ -7,10 +7,27 @@ from aiogram.enums import ChatMemberStatus
 from aiogram.types import ChatMember, ChatInviteLink
 
 from database.users.models import User
+from database.users.roles import UserRole
 from config import settings
 from exceptions.ads import DoubleSubscriptionError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = getLogger(__name__)
+
+async def get_bot_user(session: AsyncSession) -> User:
+   bot_user, _ = await User.get_or_create(
+      session=session,
+      id=settings.BOT_ID,
+      defaults={
+         'first_name': settings.BOT_FIRST_NAME,
+         'username': settings.BOT_USERNAME,
+         'info': settings.BOT_INFO,
+         'is_active': True,
+         'role': UserRole.BOT
+      }
+   )
+   return bot_user
+
 
 async def get_referral(user_id: str, bot_name: str) -> str:
    return  f"https://t.me/{bot_name}?start={user_id}"
