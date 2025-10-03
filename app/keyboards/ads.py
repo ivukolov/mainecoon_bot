@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
-from app.keyboards.lexicon import ActionButtons
+from keyboards.lexicon import ActionButtons
 
 class ReferralCheck(CallbackData, prefix="referral_check"):
     user_id: int
