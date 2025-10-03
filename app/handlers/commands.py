@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from logging import getLogger
 import typing as t
 
-from aiogram import Router,Bot
+from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import CommandStart, CommandObject
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +13,7 @@ from config import settings
 from database.users.models import User
 from keyboards.main_menu import  main_menu_kb, admin_mine_menu_kb
 from keyboards.ads import referral_check_kb
-from app.utils.bot_utils import check_referral
+from utils.bot_utils import check_referral
 from exceptions import ads
 
 
@@ -26,7 +26,7 @@ async def cmd_start(message: Message, tg_user: User, command: CommandObject, db:
     username = tg_user.username if tg_user else message.from_user.username
     referral = command.args
     if referral:
-        result, msg_txt = await check_referral(user_id=tg_user.id, referral=referral)
+        result, msg_txt = check_referral(user_id=tg_user.id, referral=referral)
         if result:
             return await message.answer(
                 msg_txt,
