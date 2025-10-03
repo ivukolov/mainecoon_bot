@@ -29,11 +29,17 @@ async def get_bot_user(session: AsyncSession) -> User:
    return bot_user
 
 
-async def get_referral(user_id: str, bot_name: str) -> str:
+def reverse_tg_url(login: str) -> str:
+   return f"https://t.me/{login}"
+
+def get_group_login() -> str:
+   return f"@{settings.CHANEL_USERNAME}"
+
+def get_referral(user_id: str, bot_name: str) -> str:
    return  f"https://t.me/{bot_name}?start={user_id}"
 
 
-async def check_referral(user_id: str, referral: str)  -> t.Tuple[bool, str]:
+def check_referral(user_id: str, referral: str)  -> t.Tuple[bool, str]:
    try:
       referral = int(referral)
    except ValueError:
