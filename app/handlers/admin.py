@@ -15,11 +15,10 @@ from database import Post
 from keyboards.admin_menu import admin_tools_menu_kb
 from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu
 from database.users.models import User
-from utils.parsers import get_media_form_message
 from utils.decorators import admin_required
 from mappers.telegram import TelegramMessageMapper
 from mappers.schemas import TelegramMessagesListDTO
-from app.services.messages import MessagesService
+from services.messages import MessagesService
 from config import settings
 
 admin_router = Router()
@@ -53,7 +52,10 @@ async def admin_menu_parse_posts(message: Message, db: AsyncSession, teleton_cli
         limit=None,
     )]
     service = MessagesService(session=db, messages=parsed_messages, is_aiogram=False)
-    await service.service_and_save_messages()
+    try:
+        await service.service_and_save_messages()
+    except Exception as e:
+        logger.error(e, exc_info=True)
     # if dto_list.error_count:
     #     not_added_messages = str(dto_list.get_error_messages_id())[:40] # Добавить корректное отоброжение
     #     return await message.answer(
