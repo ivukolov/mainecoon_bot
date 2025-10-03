@@ -39,7 +39,7 @@ def get_referral(user_id: str, bot_name: str) -> str:
    return  f"https://t.me/{bot_name}?start={user_id}"
 
 
-def check_referral(user_id: str, referral: str)  -> t.Tuple[bool, str]:
+def check_referral(user_id: int, referral: str)  -> t.Tuple[bool, str]:
    try:
       referral = int(referral)
    except ValueError:
