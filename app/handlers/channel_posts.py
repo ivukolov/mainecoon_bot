@@ -3,20 +3,28 @@ from logging import getLogger
 from pprint import pprint
 
 from aiogram import Router, types
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import User
+from services.messages import MessagesService
 
 logger = getLogger(__name__)
 
 channel_listener = Router()
 
 @channel_listener.channel_post()
-async def handle_channel_post(message: types.Message):
+async def handle_channel_post(message: types.Message, db: AsyncSession,):
     """Получение базовой информации о сообщении в канале"""
     channel_id = message.chat.id
     channel_username = message.chat.username
     message_id = message.message_id
     logger.info(f'Перехвачено сообщение из канала {message.chat.id}')
+    try:
+        service = MessagesService(session=db, messages=[message], is_aiogram=True)
+        await service.service_and_save_messages()
+    except Exception as e:
+        print(e)
+        logger.error(e, exc_info=True)
 
     # Информация о канале (чате)
     channel_info = (
