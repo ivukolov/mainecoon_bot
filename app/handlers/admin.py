@@ -21,9 +21,10 @@ from mappers.schemas import TelegramMessagesListDTO
 from services.messages import MessagesService
 from config import settings
 
-admin_router = Router()
-
 logger = getLogger(__name__)
+logger.info(f'Инициализируем роутер {__name__}')
+
+admin_router = Router()
 
 @admin_router.message(F.text == MainMenu.ADMIN.value.name)
 @admin_required
