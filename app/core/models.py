@@ -1,25 +1,26 @@
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import typing as t
 
 import sqlalchemy as sa
-from sqlalchemy import Column, DateTime
+from sqlalchemy import DateTime
 from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession
-from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column, Session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm.collections import InstrumentedList
 
 logger = logging.getLogger(__name__)
+
+T = t.TypeVar('T', bound='BaseModel')
 
 class BaseModel(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now())
-    updated_at: Mapped[datetime] = mapped_column(default=datetime.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc))
 
     @classmethod
-    async def one_or_none(cls, session: AsyncSession, **kwargs) -> t.Optional[int]:
+    async def one_or_none(cls, session: AsyncSession, **kwargs) -> t.Optional[T]:
         stmt = sa.select(cls).filter_by(**kwargs)
         result = await session.execute(stmt)
         instance = result.scalar_one_or_none()
@@ -27,12 +28,11 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
 
 
     @classmethod
-    async def get_or_create(cls, session: AsyncSession, defaults=None, **kwargs):
+    async def get_or_create(cls, session: AsyncSession, defaults=None, **kwargs)-> t.Union[T, False]:
         # Пытаемся найти существующую запись
         query = sa.select(cls).filter_by(**kwargs)
         result = await session.execute(query)
         instance = result.scalar_one_or_none()
-        # instance = await session.get(cls, kwargs)
         if instance:
             return instance, False
 
@@ -47,7 +47,7 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
         return instance, True
 
     @classmethod
-    async def create_or_update(cls, session: AsyncSession, defaults=None, **kwargs):
+    async def create_or_update(cls, session: AsyncSession, defaults=None, **kwargs) -> t.Union[T, False]:
         try:
             query = sa.select(cls).filter_by(**kwargs)
             result = await session.execute(query)
