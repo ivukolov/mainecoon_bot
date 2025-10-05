@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 from database.users.models import User
 from database.users.roles import UserRole
 from config import settings
-from app.utils.bot_utils import get_bot_user
+from utils.bot_utils import get_bot_user
 
 logger = logging.getLogger(__name__)
 
