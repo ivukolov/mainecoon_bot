@@ -12,13 +12,14 @@ class DatabaseMiddleware(BaseMiddleware):
         self.session_pool = session_pool  # Готовая фабрика сессий
 
     async def __call__(self, handler, event, data):
-        async with self.session_pool() as session:  # 1 вызов фабрики
-            data["db"] = session
             try:
-                result = await handler(event, data)
-                await session.commit()
-                return result
+                async with self.session_pool() as session:  # 1 вызов фабрики
+                    data["db"] = session
+                    result = await handler(event, data)
+                    await session.commit()
+                    return result
             except Exception:
                 await session.rollback()
-                logger.error('Ошибка взаимодействия с базой данных', exc_info=True)
-                raise
+                data["db"] = session
+                logger.error(f'Ошибка работы: {self.__class__.__name__}', exc_info=True)
+                return await handler(event, data)
