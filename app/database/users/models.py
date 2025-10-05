@@ -6,6 +6,7 @@ import sqlalchemy as sa
 from aiogram import Bot
 from aiogram.enums import ChatMemberStatus
 from aiogram.types import ChatMember
+from passlib import exc
 from requests import session
 from sqlalchemy.dialects.postgresql import CITEXT, TIMESTAMP
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -69,7 +70,7 @@ class User(BaseModel):
         }
     )
     username: Mapped[str] = mapped_column(
-        sa.String(settings.USERNAME_LENGTH), nullable=True, unique=True
+        sa.String(settings.USERNAME_LENGTH), nullable=False, unique=True
     )
     email: Mapped[str] = mapped_column(sa.String(255), unique=True, nullable=True,)
     password: Mapped[str] = mapped_column(sa.String(255), nullable=True, unique=False)
@@ -106,6 +107,39 @@ class User(BaseModel):
     def __str__(self) -> str:
         return f'<Пользователь: @{self.username} "{self.first_name} {self.last_name}">'
 
+    @staticmethod
+    def get_hash_from_password(password):
+        return settings.PWD_CONTEXT.hash(password)
+
+    def set_password(self, password):
+        self.password = self.get_hash_from_password(password)
+
+    def verify_password(self, password) -> bool:
+        try:
+            return settings.PWD_CONTEXT.verify(password, self.password)
+        except exc.UnknownHashError:
+            # Хеш в неизвестном формате
+            logger.error("Ошибка проверки пароля: неизвестный формат хеша", exc_info=True)
+            return False
+        except exc.InvalidHashError:
+            # Поврежденный или некорректный хеш
+            logger.error("Ошибка проверки пароля: некорректный хеш", exc_info=True)
+            return False
+        except Exception:
+            logger.error("Неожиданная ошибка при проверки хеша пароля", exc_info=True)
+            return False
+
+    def authenticate_user(self, password) -> bool:
+        """Асинхронная функция которая проверят валидность пользователя
+            :param username: Имя пользователя для проверки
+            :param password: <PASSWORD>
+            :return: True если пользователь валиден, False в остальных
+        """
+        if self.is_admin:
+            return self.verify_password(password)
+        return False
+
+
 
     async def add_invited_user(self, session, inviting_user: 'User') -> None:
         self.invited_user = inviting_user
@@ -115,14 +149,10 @@ class User(BaseModel):
 
 
     async def invite_user(self, referral: t.Union[str,int], session: AsyncSession) -> None:
-        inviting_user: User = await User.one_or_none(session=session, id=referral)
+        inviting_user: User | None = await User.one_or_none(session=session, id=referral)
         if not inviting_user:
             raise ads.UserNotFoundError()
         await self.add_invited_user(session, inviting_user)
-        try:
-            await self.add_invited_user(session, inviting_user)
-        except Exception as e:
-            print(e)
 
 
 
