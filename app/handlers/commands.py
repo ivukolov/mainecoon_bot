@@ -16,10 +16,10 @@ from keyboards.ads import referral_check_kb
 from utils.bot_utils import check_referral
 from exceptions import ads
 
+logger = getLogger(__name__)
+logger.info(f'Инициализируем роутер {__name__}')
 
 commands_router = Router()
-
-logger = getLogger(__name__)
 
 @commands_router.message(CommandStart())
 async def cmd_start(message: Message, tg_user: User, command: CommandObject, db: AsyncSession,):
