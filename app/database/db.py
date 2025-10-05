@@ -1,10 +1,10 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker, AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 from config import settings
 
-engine = create_async_engine(settings.DB_ENGINE)
+engine: AsyncEngine = create_async_engine(settings.DB_ENGINE)
 AsyncSessionLocal = async_sessionmaker(
     engine,
     expire_on_commit=False,
@@ -12,7 +12,7 @@ AsyncSessionLocal = async_sessionmaker(
 )
 session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-async def get_db_session():
+async def get_db_session() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -20,8 +20,6 @@ async def get_db_session():
         except Exception:
             await session.rollback()  # Роллбэк при ошибке
             raise
-        finally:
-            await session.close()  # Всегда закрываем сессию
 
 
 async def get_db_session_directly():
