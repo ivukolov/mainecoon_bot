@@ -1,12 +1,26 @@
-from dataclasses import dataclass
 from enum import StrEnum, Enum
 from typing import List, Optional
+from pydantic import BaseModel, field_validator, Field
+
+from utils.parsers import TextParser
 
 
-@dataclass
-class Button:
+class Button(BaseModel):
     name: str
-    tag: Optional[str] = None
+
+
+class TagButton(Button):
+    tag: str = Field(..., description="Тэг для выборки из бд")
+
+    @field_validator('tag', mode='after')
+    @classmethod
+    def tag_validate(cls, tag: str) -> str:
+        if not tag:
+            raise ValueError('Поле Tag не может быть пустым')
+        return TextParser.tag_normalize(tag)
+
+
+
 
 
 class MainMenu(Enum):
@@ -39,10 +53,10 @@ class ActionButtons(StrEnum):
 
 
 class KeyboardBlog(Enum):
-    BLOG_PSYCHOLOGY = Button(name='КотоПсихология 🧠', tag='#КотоПсихология')
-    BLOG_EXHIBITIONS = Button(name='КотоВыставки 🎉',tag='#КотоВыставки')
-    BLOG_NUTRITION = Button(name='КотоПитание 🍽', tag='#КотоПитание')
-    BLOG_HEALTH = Button(name='КотоЗдоровье 🏥', tag='#КотоЗдоровье')
+    BLOG_PSYCHOLOGY = TagButton(name='КотоПсихология 🧠', tag='#КотоПсихология')
+    BLOG_EXHIBITIONS = TagButton(name='КотоВыставки 🎉',tag='#КотоВыставки')
+    BLOG_NUTRITION = TagButton(name='КотоПитание 🍽', tag='#КотоПитание')
+    BLOG_HEALTH = TagButton(name='КотоЗдоровье 🏥', tag='#КотоЗдоровье')
 
 
 # class KeyboardBlog(StrEnum):
