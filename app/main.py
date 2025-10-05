@@ -13,39 +13,36 @@ from sqladmin import Admin
 
 from database.db import session_factory
 from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddleware, UserMiddleware
-from app.utils.parsers import TeletonClient
-from app.web.app import run_fastapi
+from clients.teletone import TeletonClientManager
+from web.app import run_fastapi
 from config import settings
 from handlers import routers
 
 logger = getLogger(__name__)
 logging.config.dictConfig(settings.LOGGING_CONFIG)
 
-
-
 async def run_bot(dp: Dispatcher, bot: Bot):
     """Запуск бота в режиме long polling"""
+    logger.info("Запуск бота")
     await dp.start_polling(bot)
 
 async def main():
     # Инициализация клиента
-    teletone = TeletonClient()
-    # Проверка сессии в случае ошибки автоизация.
-    await teletone.connection_check()
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     storage = RedisStorage.from_url(settings.REDIS_STORAGE)
     dp = Dispatcher(storage=storage)
+    tt_client_manager = TeletonClientManager()
+    client = await tt_client_manager.get_client()
     for router in routers:
         dp.include_router(router)
     dp.update.middleware(DatabaseMiddleware(session_factory))
     dp.update.middleware(UserMiddleware())
     dp.update.middleware(BotMiddleware(bot))
-    dp.update.middleware(TeletonClientMiddleware(teletone))
+    dp.update.middleware(TeletonClientMiddleware(client))
     try:
         async with asyncio.TaskGroup() as tg:
             tg.create_task(run_fastapi())
             tg.create_task(run_bot(dp, bot))
-        logger.info("Запуск бота")
     except KeyboardInterrupt:
         logger.info("Shutting down")
     except TelegramServerError:
