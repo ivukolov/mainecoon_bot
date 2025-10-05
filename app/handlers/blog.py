@@ -11,11 +11,12 @@ from keyboards.lexicon import MainMenu
 from utils.pagintaions import PostPaginationHandler, Paginator, Pagination
 
 logger = getLogger(__name__)
+logger.info(f'Инициализируем роутер {__name__}')
 
 blog_router = Router()
 
 @blog_router.message(F.text == MainMenu.BLOG.value.name)
-async def blog_menu(message: Message, db: AsyncSession, teleton_client: TelegramClient):
+async def blog_menu(message: Message, db: AsyncSession):
     await message.answer(f"Выберите категорию", reply_markup=blog_categories_kb())
 
 @blog_router.callback_query(Pagination.filter())
