@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-
+from logging import getLogger
 
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import RedirectResponse
@@ -14,6 +14,7 @@ from web.admin import setup_admin_panel
 from web.routes import router
 from web.midleware import DatabaseMiddleware
 
+logger = getLogger(__name__)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     debug=settings.DEBUG,
@@ -29,6 +30,7 @@ setup_admin_panel(app)
 app.include_router(router)
 
 async def run_fastapi():
+    logger.info("Запуск админ панели.")
     import uvicorn
     config = uvicorn.Config(
         app,
