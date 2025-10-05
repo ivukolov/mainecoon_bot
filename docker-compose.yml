@@ -15,7 +15,7 @@ services:
       - redis
 
   postgres:
-    image: postgres:13-alpine
+    image: postgres:16.1
     container_name: mainecoon_postgres
     restart: unless-stopped
     env_file:
@@ -23,7 +23,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5433"
+      - "5432:5432"
 
   redis:
     image: redis:7-alpine
