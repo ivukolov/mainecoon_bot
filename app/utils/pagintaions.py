@@ -1,15 +1,11 @@
+from typing import List, TypeVar
+
 import sqlalchemy as sa
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, TypeVar, Optional
-from aiogram import Router, F, Bot
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message
 from aiogram.filters.callback_data import CallbackData
 from aiogram.enums import ChatAction
-from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import declarative_base
 
 from database.blog.models import Tag, Post
 from config import settings
@@ -47,6 +43,7 @@ class Paginator:
 
 class PostPaginationHandler:
     query = sa.select(Post).join(Post.tags)
+
     def __init__(self, session: AsyncSession):
         self.session = session
         self.page_size = 5
@@ -79,17 +76,21 @@ class PostPaginationHandler:
     async def handle_items_page(self, message: Message, tag, page: int = 1,):
         """Обработчик страницы с элементами"""
         await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
-        posts = await self.paginator.get_page(self.query.filter(Tag.name == tag).order_by(Post.id.desc()), page=page)
+        posts = await self.paginator.get_page(
+            self.query.filter(
+                Tag.name == tag
+            ).order_by(Post.id.desc()), page=page
+        )
 
-        total_count = await self.paginator.get_total_count(self.query.filter(Tag.name == tag).order_by(Post.id.desc()))
+        total_count = await self.paginator.get_total_count(
+            self.query.filter(
+                Tag.name == tag
+            ).order_by(Post.id.desc()))
         total_pages = (total_count + self.paginator.page_size - 1) // self.paginator.page_size
 
         if not posts:
             await message.answer("Элементы не найдены")
             return
-
-            # Формируем сообщение
-        # items_text = "\n".join([f"{item.id}. {item.title}" for item in items])
         keyboard = self.create_pagination_keyboard(page, total_pages, tag=tag)
         text = f"Страница {page}, тэг: {tag}\n"
         await message.answer(text, reply_markup=keyboard)
