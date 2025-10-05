@@ -109,7 +109,7 @@ class Post(BaseModel):
         sa.Integer, primary_key=True, nullable=False, comment='id поста из telegram', unique=True
     )
     date: orm.Mapped[datetime] = orm.mapped_column(sa.DateTime(timezone=True), comment='Дата создания поста.')
-    edit_date: orm.Mapped[datetime] = orm.mapped_column(sa.DateTime, nullable=True, comment='Дата Изменения поста.')
+    edit_date: orm.Mapped[datetime] = orm.mapped_column(sa.DateTime(timezone=True), nullable=True, comment='Дата Изменения поста.')
     title: orm.Mapped[str] = orm.mapped_column(sa.String(settings.POST_TITLE_LENGTH), nullable=False, comment='Название поста.' )
     message: orm.Mapped[str] = orm.mapped_column(sa.Text, nullable=False, comment='Сообщение из поста')
     author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey("users.id", comment='Автор поста'), nullable=True)
