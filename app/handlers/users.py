@@ -8,11 +8,12 @@ from aiogram.types import ChatMemberUpdated
 from database import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
-users_router = Router()
+
 
 logger = getLogger(__name__)
+logger.info(f'Инициализируем роутер {__name__}')
 
-logger.info('Инициализируем хэндлер Users')
+users_router = Router()
 
 @users_router.chat_member(
     ChatMemberUpdatedFilter(
@@ -22,9 +23,7 @@ logger.info('Инициализируем хэндлер Users')
 async def bot_added_as_member(event: ChatMemberUpdated, tg_user: User, db: AsyncSession):
     """Обработка вступления новых пользователей"""
     user = event.new_chat_member.user
-    chat = event.chat
     tg_user.is_active = True
-    # print(f"✅ В группу вступил новый пользователь: {user.full_name} (@{user.username})")
     logger.info(f"В группу вступил новый пользователь: {user.full_name} (@{user.username})")
 
 
