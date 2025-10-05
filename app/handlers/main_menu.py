@@ -15,12 +15,12 @@ from keyboards.main_menu import blog_categories_kb, main_menu_kb, admin_mine_men
 from keyboards.lexicon import MainMenu, KeyboardBlog, ActionButtons
 from database.users.models import User
 from database import Tag, Post
-from utils.parsers import get_media_form_message
 from utils.pagintaions import PostPaginationHandler, Paginator, Pagination
 
-main_menu_router = Router()
-
 logger = getLogger(__name__)
+logger.info(f'Инициализируем роутер {__name__}')
+
+main_menu_router = Router()
 
 @main_menu_router.message(F.text == ActionButtons.MAIN_MENU)
 async def main_menu_returner(message: Message, db: AsyncSession, tg_user: User, bot: Bot):
