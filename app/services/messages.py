@@ -9,8 +9,8 @@ from mappers import schemas
 from utils.parsers import TextParser, TextCleaner
 from config import settings
 from database import Post, Tag, User
-from app.mappers.telegram import TelegramMessageMapper
-from app.utils.bot_utils import get_bot_user
+from mappers.telegram import TelegramMessageMapper
+from utils.bot_utils import get_bot_user
 
 
 
