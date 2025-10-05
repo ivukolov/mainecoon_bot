@@ -12,6 +12,7 @@ from database import User
 from utils.bot_utils import get_referral, check_user_subscribe, get_group_login
 
 logger = getLogger(__name__)
+logger.info(f'Инициализируем роутер {__name__}')
 
 ads_router = Router()
 
