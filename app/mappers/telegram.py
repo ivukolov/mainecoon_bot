@@ -6,8 +6,7 @@ import aiogram.types as aio_types
 from aiogram.enums.content_type import ContentType as aio_content_type
 from pydantic import ValidationError
 
-from app.exceptions.mapper import CustomValidationError
-from app.mappers import schemas
+from mappers import schemas
 
 logger = getLogger(__name__)
 
@@ -65,7 +64,7 @@ class TelegramMessageMapper:
         for message in messages:
             try:
                 if is_aiogram:
-                    dto_message = TelegramMessageMapper.__from_telethon_message(message)
+                    dto_message = TelegramMessageMapper.__from_aiogram_message(message)
                 else:
                     dto_message = TelegramMessageMapper.__from_telethon_message(message)
 
