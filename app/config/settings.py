@@ -1,4 +1,5 @@
 import logging
+from passlib.context import CryptContext
 from typing import Final
 from enum import Enum
 import os
@@ -8,8 +9,12 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-PARTNERS_TAG = '#Партнёры'
+
+PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
+FAST_API_SECRET_KEY: Final[str] = os.getenv("FAST_API_SECRET_KEY")
+PARTNERS_TAG: Final[str] = '#Партнёры'
 PROJECT_NAME: Final[str] = 'Кото-Вет помощник' # Используется для имени web админки интерфейса
+CHANEL_USERNAME: Final[str] = "mainecoon_voronezh"
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
 ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
 #Bot user profile используется для создания бота в бд при его первой инициализации.
@@ -21,23 +26,28 @@ BOT_INFO = 'Главный трудяга канала'
 BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, получается у @botfather
 CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID")
 GROUP_ID: Final[str] = os.getenv("GROUP_ID")
+# Teletone
 TG_API_ID: Final[str] = os.getenv("TG_API_ID")
 TG_API_HASH: Final[str] = os.getenv("TG_API_HASH")
 TG_PHONE: Final[str] = os.getenv("TG_PHONE")
+TELETONE_SESSION_NAME: Final[str] = 'tg_session_teletone'
+PARSE_MODE: Final[str] = 'html'
 TG_SESSION_RECREATE_TIMEOUT: Final[int] = 3 # Время для перезапуска сессии в случае обрыва секунды
 # JWT
 COMPANY_NAME="Кото-ВетПросвет"
 JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = "HS256"
+JWT_EXPIRES_HOURS: int = 720
 ## DB.
-# ENGINE.
-DB_ENGINE = "sqlite+aiosqlite:///./bot.db"
 # Postgres.
 POSTGRES_HOST: Final[str] = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT: Final[str] = os.getenv("POSTGRES_PORT")
 POSTGRES_DB: Final[str] = os.getenv("POSTGRES_DB")
 POSTGRES_USER: Final[str] = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD: Final[str] = os.getenv("POSTGRES_PASSWORD")
+# ENGINE.
+# "sqlite+aiosqlite:///./bot.db"
+DB_ENGINE =f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 # Models
 # User
 USERNAME_LENGTH: Final[int] = 100
@@ -46,7 +56,7 @@ USER_FIRST_NAME_LENGTH: Final[int] = 100
 USER_LAST_NAME_LENGTH: Final[int] = 100
 LANG_CODE_LENGTH: Final[int] = 10
 # Tag
-TAG_NAME_LENGTH: Final[int] = 20
+TAG_NAME_LENGTH: Final[int] = 30
 TAG_EMOJI_LENGTH: Final[int] = 14
 # Post
 POST_TITLE_LENGTH: Final[int] = 100
