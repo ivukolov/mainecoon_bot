@@ -17,7 +17,7 @@ logger.info(f'Инициализируем роутер {__name__}')
 ads_router = Router()
 
 @ads_router.callback_query(ads.ReferralCheck.filter())
-async def handle_blog_btn(callback_query: CallbackQuery, callback_data: ads.ReferralCheck, db: AsyncSession, tg_user: User):
+async def ads_handle_referral_invite(callback_query: CallbackQuery, callback_data: ads.ReferralCheck, db: AsyncSession, tg_user: User):
     """Функция обработки реферальной ссылки"""
     bot = callback_query.message.bot
     if tg_user.id == callback_data.user_id:
@@ -36,8 +36,25 @@ async def handle_blog_btn(callback_query: CallbackQuery, callback_data: ads.Refe
 
 
 @ads_router.message(F.text == MainMenu.ADS.value.name)
-async def blog_menu(message: Message, db: AsyncSession, tg_user: User):
-    bot = message.bot
+async def ads_menu(message: Message, db: AsyncSession, tg_user: User):
+    await message.answer(
+        f"Для размещения рекламы вам нужно задонатить "
+        f"{settings.DONATION_AMOUNT} руб. или пригласить {settings.USERS_CNT} "
+        f"подписчиков",
+        reply_markup=ads.ads_publisher_kb()
+        )
+    # bot = message.bot
+    # bot_about = await bot.get_me()
+    # referral = get_referral(user_id=tg_user.id, bot_name=bot_about.username)
+    # await message.answer(f"Ваша реферальная ссылка {referral}")
+
+@ads_router.callback_query(F.data == ads.AdsMenu.GET_REFERRAL.value.callback)
+async def ads_referral_btn(callback_query: CallbackQuery, db: AsyncSession, tg_user: User):
+    bot = callback_query.message.bot
     bot_about = await bot.get_me()
     referral = get_referral(user_id=tg_user.id, bot_name=bot_about.username)
-    await message.answer(f"Ваша реферальная ссылка {referral}")
+    await callback_query.message.answer(f"Ваша реферальная ссылка {referral}")
+
+@ads_router.callback_query(F.data == ads.AdsMenu.DONATE.value.callback)
+async def ads_donate_btn(callback_query: CallbackQuery, db: AsyncSession, tg_user: User):
+    await callback_query.message.answer(f"Спасибо что решили нас поддержать! ")
