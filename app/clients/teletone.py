@@ -103,6 +103,6 @@ class TeletonClientManager:
         # 3. Проверяем авторизацию
         if not await self._client.is_user_authorized():
             logger.info("Клиенту Telegram требуется аутентификация")
-            self._client.start(phone=self.phone)
+            await self._client.start(phone=self.phone)
             await self._save_session() # Сохраняем новую сессию
         logger.info("Клиент Telegram успешно инициализирован и авторизован.")
