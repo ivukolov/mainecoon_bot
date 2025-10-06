@@ -11,6 +11,7 @@ load_dotenv(override=True)
 
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
 ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
+ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 
 # Telegram.
 ## ПАРАМЕТРЫ АДМИНИСТРАТОРА КАНАЛА
@@ -64,6 +65,9 @@ TAG_NAME_LENGTH: Final[int] = 30
 TAG_EMOJI_LENGTH: Final[int] = 14
 # Post
 POST_TITLE_LENGTH: Final[int] = 100
+# ADS
+DONATION_AMOUNT = 150 # Сумма доната в рублях для размещения рекламы
+USERS_CNT = 15 # Количество приглашенных людей для размещения рекламы
 
 # Redis.
 REDIS_HOST: Final[str] = '127.0.0.1'#os.getenv("REDIS_HOST")
@@ -72,8 +76,6 @@ REDIS_STORAGE: Final[str] = f"redis://{REDIS_HOST}:{REDIS_PORT}"
 # Pyment.
 YOOKASSA_SHOP_ID: Final[str ]= os.getenv("YOOKASSA_SHOP_ID")
 YOOKASSA_SECRET_KEY: Final[str] = os.getenv("YOOKASSA_SECRET_KEY")
-# Folders.
-ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 # Media
 MEDIA: Final[str] = "media"
 MEDIA_ROOT: Final[Path] = ROOT_DIR / MEDIA
