@@ -22,9 +22,8 @@ async def handle_blog_btn(callback_query: CallbackQuery, callback_data: ads.Refe
     bot = callback_query.message.bot
     if tg_user.id == callback_data.user_id:
         return await callback_query.message.answer('Нельзя пригласить самого себя')
-    group = get_group_login()
+    group_login = await get_group_login(bot)
     is_subscribe = await check_user_subscribe(bot=bot, user_id=tg_user.id)
-    #invite_link = await bot.create_chat_invite_link(settings.CHANNEL_ID)
     if is_subscribe:
         try:
             await tg_user.invite_user(referral=callback_data.referral, session=db)
@@ -32,13 +31,13 @@ async def handle_blog_btn(callback_query: CallbackQuery, callback_data: ads.Refe
             return await callback_query.message.answer('Нельзя принять инвайт дважды')
         except Exception:
             return await callback_query.message.answer('Произошла неизвестная ошибка, обратитесь к администратору канала')
-        return await callback_query.message.answer(f"Добро пожаловать в наше сообщество! {group}")
-    return await callback_query.message.answer(f"Вы не подписаны на группу {group}")
+        return await callback_query.message.answer(f"Добро пожаловать в наше сообщество! {group_login}")
+    return await callback_query.message.answer(f"Вы не подписаны на группу {group_login}")
 
 
 @ads_router.message(F.text == MainMenu.ADS.value.name)
 async def blog_menu(message: Message, db: AsyncSession, tg_user: User):
-    bot_about = await message.bot.get_me()
-    group = get_group_login()
+    bot = message.bot
+    bot_about = await bot.get_me()
     referral = get_referral(user_id=tg_user.id, bot_name=bot_about.username)
     await message.answer(f"Ваша реферальная ссылка {referral}")
