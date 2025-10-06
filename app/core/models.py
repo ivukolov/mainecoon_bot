@@ -77,7 +77,7 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
                 session.add(instance)
                 updated = False
 
-            await session.commit()
+            await session.flush()
             await session.refresh(instance)
             return instance, not updated  # True если создан, False если обновлен
 
