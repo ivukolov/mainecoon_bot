@@ -74,20 +74,23 @@ class TeletonClientManager:
 
     async def _save_session(self) -> bool:
         """Метод сохранения сесии"""
-        session_name = settings.TELETONE_SESSION_NAME
+        db_session = await get_db_session_directly()
         try:
-            session_data = {
-                session_name: self.client.session.save()
-            }
-        except Exception:
-            logger.error('Не удалось инициализировать сессию', exc_info=True)
+            tg_session_hash = self.client.session.save()
+        except Exception as e:
+            logger.error(f'Не удалось инициализировать сессию {e}', exc_info=True)
             return False
         try:
-            with open('teletone_session.json', 'w') as f:
-                json.dump(session_data, f)
-        except Exception:
-            logger.error('Не удалось сохранить json файл сессии', exc_info=True)
-            return False
+            async with db_session as db:
+                await TelegramSession.create_or_update(session=db,
+                    name=settings.TELETONE_SESSION_NAME, defaults={
+                        'hash': tg_session_hash
+                    }
+                )
+                db.commit()
+                logger.info('Новая сессия инициализирована и сохранена в базу.')
+        except Exception as e:
+            logger.error('Ошибка сохранения сессии в БД', exc_info=True)
         return True
 
     async def _initialize_client(self):
