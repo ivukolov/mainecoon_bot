@@ -14,28 +14,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = getLogger(__name__)
 
-async def get_bot_user(session: AsyncSession) -> User:
-   bot_user, _ = await User.get_or_create(
+async def get_admin_user(session: AsyncSession) -> User:
+   admin, _ = await User.get_or_create(
       session=session,
-      id=settings.BOT_ID,
+      id=settings.ADMIN_ID,
       defaults={
-         'first_name': settings.BOT_FIRST_NAME,
-         'username': settings.BOT_USERNAME,
-         'info': settings.BOT_INFO,
+         'username': settings.ADMIN_USERNAME,
          'is_active': True,
-         'role': UserRole.BOT
+         'role': UserRole.ADMIN,
       }
    )
-   return bot_user
+   return admin
 
 
 def reverse_tg_url(login: str) -> str:
    return f"https://t.me/{login}"
 
-def get_group_login() -> str:
-   return f"@{settings.CHANEL_USERNAME}"
+async def get_group_login(bot: Bot) -> str:
+   chat = await bot.get_chat(settings.CHANNEL_ID)
+   return f"@{chat.username}"
 
-def get_referral(user_id: str, bot_name: str) -> str:
+def get_referral(user_id: int, bot_name: str) -> str:
    return  f"https://t.me/{bot_name}?start={user_id}"
 
 
