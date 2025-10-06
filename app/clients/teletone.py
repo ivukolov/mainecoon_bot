@@ -87,7 +87,7 @@ class TeletonClientManager:
                         'hash': tg_session_hash
                     }
                 )
-                db.commit()
+                await db.commit()
                 logger.info('Новая сессия инициализирована и сохранена в базу.')
         except Exception as e:
             logger.error('Ошибка сохранения сессии в БД', exc_info=True)
