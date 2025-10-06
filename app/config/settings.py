@@ -9,23 +9,22 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-
-PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
-FAST_API_SECRET_KEY: Final[str] = os.getenv("FAST_API_SECRET_KEY")
-PARTNERS_TAG: Final[str] = '#Партнёры'
-PROJECT_NAME: Final[str] = 'Кото-Вет помощник' # Используется для имени web админки интерфейса
-CHANEL_USERNAME: Final[str] = "mainecoon_voronezh"
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
 ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
-#Bot user profile используется для создания бота в бд при его первой инициализации.
-BOT_ID = 7714336436
-BOT_FIRST_NAME = "Кото-Вет Помощник"
-BOT_USERNAME = 'CatVetHelperBot'
-BOT_INFO = 'Главный трудяга канала'
+
 # Telegram.
+## ПАРАМЕТРЫ АДМИНИСТРАТОРА КАНАЛА
+ADMIN_ID: Final[str] = os.getenv("ADMIN_ID")
+ADMIN_USERNAME: Final[str] = os.getenv("ADMIN_USERNAME")
+# BOT_ID = 7714336436
+# BOT_FIRST_NAME = "Кото-Вет Помощник"
+# BOT_USERNAME = 'CatVetHelperBot'
+# BOT_INFO = 'Главный трудяга канала'
+## Бот
+PARTNERS_TAG: Final[str] = '#Партнёры'
 BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, получается у @botfather
 CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID")
-GROUP_ID: Final[str] = os.getenv("GROUP_ID")
+
 # Teletone
 TG_API_ID: Final[str] = os.getenv("TG_API_ID")
 TG_API_HASH: Final[str] = os.getenv("TG_API_HASH")
@@ -33,13 +32,18 @@ TG_PHONE: Final[str] = os.getenv("TG_PHONE")
 TELETONE_SESSION_NAME: Final[str] = 'tg_session_teletone'
 PARSE_MODE: Final[str] = 'html'
 TG_SESSION_RECREATE_TIMEOUT: Final[int] = 3 # Время для перезапуска сессии в случае обрыва секунды
-# JWT
+
+#ADMIN PANEL
+PROJECT_NAME: Final[str] = 'Кото-Вет помощник' # Используется для имени web админки интерфейса
+PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
+FAST_API_SECRET_KEY: Final[str] = os.getenv("FAST_API_SECRET_KEY")
+## JWT
 COMPANY_NAME="Кото-ВетПросвет"
 JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_HOURS: int = 720
-## DB.
-# Postgres.
+# DB.
+## Postgres.
 POSTGRES_HOST: Final[str] = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT: Final[str] = os.getenv("POSTGRES_PORT")
 POSTGRES_DB: Final[str] = os.getenv("POSTGRES_DB")
