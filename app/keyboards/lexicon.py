@@ -19,6 +19,9 @@ class TagButton(Button):
             raise ValueError('Поле Tag не может быть пустым')
         return TextParser.tag_normalize(tag)
 
+class AdsButton(Button):
+    callback: str = Field(..., description="callback data")
+
 
 
 
@@ -39,6 +42,11 @@ class AdminMenu(StrEnum):
     UPDATE_USERS = 'Обновить список пользователей'
 
 
+class AdsMenu(Enum):
+    GET_REFERRAL = AdsButton(name='Получить реферальную ссылку', callback='get_referral')
+    DONATE = AdsButton(name='Оплатить', callback='donate')
+
+
 class ActionButtons(StrEnum):
     CANCEL = "❌ Отмена"
     BACK = "⬅️ Назад"
@@ -57,6 +65,8 @@ class KeyboardBlog(Enum):
     BLOG_EXHIBITIONS = TagButton(name='КотоВыставки 🎉',tag='#КотоВыставки')
     BLOG_NUTRITION = TagButton(name='КотоПитание 🍽', tag='#КотоПитание')
     BLOG_HEALTH = TagButton(name='КотоЗдоровье 🏥', tag='#КотоЗдоровье')
+
+
 
 
 # class KeyboardBlog(StrEnum):
