@@ -20,7 +20,9 @@ app = FastAPI(
     debug=settings.DEBUG,
     engine=engine,
     middleware=[
-        Middleware(DatabaseMiddleware),
+        Middleware(
+            DatabaseMiddleware
+        ),
         Middleware(
             CORSMiddleware, allow_origins=["http://localhost", "http://127.0.0.1"]
         ),
