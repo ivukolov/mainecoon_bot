@@ -82,6 +82,6 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
             return instance, not updated  # True если создан, False если обновлен
 
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Ошибка в работе метода create_or_update {e}", exc_info=True)
             await session.rollback()
             raise e
