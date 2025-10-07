@@ -43,10 +43,6 @@ async def ads_menu(message: Message, db: AsyncSession, tg_user: User):
         f"подписчиков",
         reply_markup=ads.ads_publisher_kb()
         )
-    # bot = message.bot
-    # bot_about = await bot.get_me()
-    # referral = get_referral(user_id=tg_user.id, bot_name=bot_about.username)
-    # await message.answer(f"Ваша реферальная ссылка {referral}")
 
 @ads_router.callback_query(F.data == ads.AdsMenu.GET_REFERRAL.value.callback)
 async def ads_referral_btn(callback_query: CallbackQuery, db: AsyncSession, tg_user: User):
