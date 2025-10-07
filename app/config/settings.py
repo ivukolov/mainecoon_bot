@@ -15,7 +15,7 @@ ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 
 # Telegram.
 ## ПАРАМЕТРЫ АДМИНИСТРАТОРА КАНАЛА
-ADMIN_ID: Final[str] = os.getenv("ADMIN_ID")
+ADMIN_ID: Final[int] = int(os.getenv("ADMIN_ID"))
 ADMIN_USERNAME: Final[str] = os.getenv("ADMIN_USERNAME")
 # BOT_ID = 7714336436
 # BOT_FIRST_NAME = "Кото-Вет Помощник"
