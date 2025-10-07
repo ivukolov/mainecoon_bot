@@ -7,6 +7,7 @@ from handlers.ads import ads_router
 from handlers.channel_posts import channel_listener
 from handlers.users import users_router
 from handlers.about import about_router
+from handlers import polls_router
 
 
 routers = (
@@ -18,5 +19,6 @@ routers = (
     blog_router,
     partners_router,
     ads_router,
+    polls_router,
     about_router,
 )
