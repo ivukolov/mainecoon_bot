@@ -12,8 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from keyboards.main_menu import blog_categories_kb, main_menu_kb
 
 from database import Post
-from keyboards.admin_menu import admin_tools_menu_kb
-from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu
+from keyboards.admin_menu import admin_tools_menu_kb, maike_interactives_kb
+from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractives
 from database.users.models import User
 from utils.decorators import admin_required
 from mappers.telegram import TelegramMessageMapper
@@ -42,8 +42,18 @@ async def admin_menu(message: Message, tg_user: User):
     )
     await message.answer(response, reply_markup=admin_tools_menu_kb())
 
+# @admin_router.callback_query(F.data == AdminInteractives.QUIZ.value.callback)
+# @admin_required
+# async def admin_menu_make_interactives(callback_query: CallbackQuery, tg_user: User):
+#     return callback_query.message.answer('123')
 
-@admin_router.message(F.text == AdminMenu.PARSE_POSTS)
+@admin_router.message(F.text == AdminMenu.ADD_INTERACTIVES.value.name)
+@admin_required
+async def admin_menu_make_interactives(message: Message, db: AsyncSession, tg_user: User):
+    return await message.answer('Выберите тип интеракитва', reply_markup=maike_interactives_kb())
+
+
+@admin_router.message(F.text == AdminMenu.PARSE_POSTS.value.name)
 @admin_required
 async def admin_menu_parse_posts(message: Message, db: AsyncSession, teleton_client: TelegramClient, tg_user: User):
     channel = await teleton_client.get_entity(settings.CHANNEL_ID)
@@ -57,19 +67,9 @@ async def admin_menu_parse_posts(message: Message, db: AsyncSession, teleton_cli
         await service.service_and_save_messages()
     except Exception as e:
         logger.error(e, exc_info=True)
-    # if dto_list.error_count:
-    #     not_added_messages = str(dto_list.get_error_messages_id())[:40] # Добавить корректное отоброжение
-    #     return await message.answer(
-    #         f"Не удалось акутализировать посты: {not_added_messages}",
-    #         reply_markup=admin_tools_menu_kb()
-    #     )
-    # for parsed_message in parsed_messages:
-    #     # print(parsed_message)
-    #     data = TelegramMessageMapper.from_telethon_message(parsed_message)
-    #     # print(data)
     return await message.answer(f"Все посты актуализированные!", reply_markup=admin_tools_menu_kb())
 
-@admin_router.message(F.text == AdminMenu.ADD_NEW_POSTS)
+@admin_router.message(F.text == AdminMenu.ADD_NEW_POSTS.value.name)
 @admin_required
 async def admin_menu_add_new_posts(message: Message,db: AsyncSession, teleton_client: TelegramClient, tg_user: User):
     channel = await teleton_client.get_entity(settings.CHANNEL_ID) # Вынести в отдельный метод
@@ -84,7 +84,7 @@ async def admin_menu_add_new_posts(message: Message,db: AsyncSession, teleton_cl
     return await message.answer(f"Добавил новые посты босс!", reply_markup=admin_tools_menu_kb())
 
 
-@admin_router.message(F.text == AdminMenu.UPDATE_USERS)
+@admin_router.message(F.text == AdminMenu.UPDATE_USERS.value.name)
 @admin_required
 async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_client: TelegramClient, tg_user: User):
     # Вынести в отдельный метод
