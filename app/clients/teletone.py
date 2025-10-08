@@ -5,9 +5,11 @@ from pathlib import Path
 from typing import Final, Optional, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from telethon.sync import TelegramClient
 from telethon.sessions import Session, StringSession
 
+from utils.bot_utils import bot_send_message, get_confirm_code
 from utils.decorators import async_timer
 from database.blog.models import Tag, Post
 from database.users.models import User, TelegramSession
@@ -23,6 +25,7 @@ class TeletonClientManager:
         self.api_id: Final[int] = int(settings.TG_API_ID)
         self.api_hash: Final[str] = settings.TG_API_HASH
         self.phone: Final[str] = settings.TG_PHONE
+        self.password: Final[str] = settings.TG_PASSWORD
         self.session_file: Path = Path('session_config.json')
         self._client: t.Optional[TelegramClient] = None
         self._session_name: str = 'tg_session_teletone'
@@ -103,6 +106,7 @@ class TeletonClientManager:
         # 3. Проверяем авторизацию
         if not await self._client.is_user_authorized():
             logger.info("Клиенту Telegram требуется аутентификация")
-            await self._client.start(phone=self.phone)
+            await bot_send_message('Клиенту Telegram требуется аутентификация, введите код в консоли!')
+            await self._client.start(phone=self.phone, password=self.password or None)
             await self._save_session() # Сохраняем новую сессию
         logger.info("Клиент Telegram успешно инициализирован и авторизован.")
