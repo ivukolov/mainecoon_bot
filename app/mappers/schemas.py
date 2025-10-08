@@ -5,15 +5,9 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List, Set, Tuple
 from enum import Enum
 
-logger = getLogger(__name__)
+from database.users.roles import UserRole
 
-class UserType(str, Enum):
-    """Тип пользователя Telegram."""
-    BOT = "bot"
-    USER = "user"
-    CHANNEL = "channel"
-    GROUP = "group"
-    SUPERGROUP = "supergroup"
+logger = getLogger(__name__)
 
 class UserStatus(str, Enum):
     """Статус пользователя Telegram."""
@@ -48,27 +42,15 @@ class TelegramUserDTO(BaseModel):
     username: Optional[str] = Field(default=None, description="Логин")
     first_name: Optional[str] = Field(default=None, description="Имя")
     last_name: Optional[str] = Field(default=None, description="Фамилия")
+    # Контактная информация
+    contact: Optional[str] = Field(default=None, description="Находится в ваших контактах")
+    mutual_contact: Optional[str] = Field(default=None, description="Взаимный контакт")
+    phone: Optional[str] = Field(default=None, description="Номер телефона")
+    access_hash: Optional[str] = Field(default=None, description="Хэш для доступа к пользователю")
 
     # Тип и статус
-    user_type: UserType = Field(default=UserType.USER, description="Тип сообщения")
-    status: Optional[UserStatus] = Field(default=None, description="Статус пользователя")
+    role: UserRole = Field(default=UserRole.USER, description="Тип пользователя")
     is_premium: bool = Field(default=False, description="Подписка на телеграмм преимум")
-    is_bot: bool = Field(default=False, description="Является ли пользователь ботом")
-
-    # Контактная информация
-    phone: Optional[str] = Field(default=None, description="Номер телефона")
-    lang_code: Optional[str] = Field(default=None, description="Языковой код")
-
-    # Мета-информация
-    last_online: Optional[datetime] = Field(default=None, description="Заходил последний раз")
-
-    # Для групп/каналов
-    title: Optional[str] = Field(default=None, description="Название группы")
-    participants_count: Optional[int] = Field(default=None, description="Количество подписчиков")
-    description: Optional[str] = Field(default=None, description="Описание группы")
-
-    # Дополнительные данные
-    raw_data: Dict[str, Any] = Field(default_factory=dict, description="Сырые данные")
 
     @property
     def display_name(self) -> str:
@@ -83,6 +65,14 @@ class TelegramUserDTO(BaseModel):
             return f"@{self.username}"
         else:
             return f"User #{self.id}"
+
+class TelegramUsersListDTO(BaseModel):
+    users: List[TelegramUserDTO] = Field(default_factory=list)
+    total_count: int = Field(default=0, ge=0, description="Количество обработанных сообщений")
+
+    def add_users(self, users: List[TelegramUserDTO]):
+        for user in users:
+            self.users.append(user)
 
 class MessageMetrics(BaseModel):
     """Метрики сообщения."""
