@@ -85,7 +85,7 @@ async def get_confirm_code():
          logger.error(f"Error: {e}")
          await asyncio.sleep(5)
 
-async def get_admin_user(session: AsyncSession) -> User:
+async def get_or_create_admin_user(session: AsyncSession) -> User:
    admin, _ = await User.get_or_create(
       session=session,
       id=settings.ADMIN_ID,
@@ -93,6 +93,7 @@ async def get_admin_user(session: AsyncSession) -> User:
          'username': settings.ADMIN_USERNAME,
          'is_active': True,
          'role': UserRole.ADMIN,
+         'password': User.get_password_hash(settings.ADMIN_PASSWORD)
       }
    )
    return admin
