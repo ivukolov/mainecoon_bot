@@ -30,6 +30,7 @@ CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID")
 TG_API_ID: Final[str] = os.getenv("TG_API_ID")
 TG_API_HASH: Final[str] = os.getenv("TG_API_HASH")
 TG_PHONE: Final[str] = os.getenv("TG_PHONE")
+TG_PASSWORD : Final[str] = os.getenv("TG_PASSWORD")
 TELETONE_SESSION_NAME: Final[str] = 'tg_session_teletone'
 PARSE_MODE: Final[str] = 'html'
 TG_SESSION_RECREATE_TIMEOUT: Final[int] = 3 # Время для перезапуска сессии в случае обрыва секунды
@@ -70,8 +71,8 @@ DONATION_AMOUNT = 150 # Сумма доната в рублях для разм�
 USERS_CNT = 15 # Количество приглашенных людей для размещения рекламы
 
 # Redis.
-REDIS_HOST: Final[str] = '127.0.0.1'#os.getenv("REDIS_HOST")
-REDIS_PORT: Final[str] = os.getenv("REDIS_PORT")
+REDIS_HOST: Final[str] = os.getenv("REDIS_HOST")
+REDIS_PORT: Final[int] = int(os.getenv("REDIS_PORT"))
 REDIS_STORAGE: Final[str] = f"redis://{REDIS_HOST}:{REDIS_PORT}"
 # Pyment.
 YOOKASSA_SHOP_ID: Final[str ]= os.getenv("YOOKASSA_SHOP_ID")
