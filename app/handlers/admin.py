@@ -16,7 +16,7 @@ from keyboards.admin_menu import admin_tools_menu_kb, maike_interactives_kb
 from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractives
 from database.users.models import User
 from utils.decorators import admin_required
-from mappers.telegram import TelegramMessageMapper
+from mappers.telegram import TelegramMessageMapper, TelegramUserMapper
 from mappers.schemas import TelegramMessagesListDTO
 from services.messages import MessagesService
 from config import settings
@@ -88,15 +88,13 @@ async def admin_menu_add_new_posts(message: Message,db: AsyncSession, teleton_cl
 @admin_required
 async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_client: TelegramClient, tg_user: User):
     # Вынести в отдельный метод
-    channel = await teleton_client.get_entity(-1003179370474)  # Вынести в отдельный метод
+    channel = await teleton_client.get_entity(settings.CHANNEL_ID)  # Вынести в отдельный метод
     chat = await teleton_client.get_permissions(channel, await teleton_client.get_me())
     if not chat.is_admin:
-        print("❌ Бот не является администратором группы!")
         return await message.answer(
             f"❌ Вы не является администратором группы для сбора информации о пользователях!",
             reply_markup=admin_tools_menu_kb()
         )
-        return
-    participants = await teleton_client.get_participants(channel)
-    print(participants)
+    parsed_users = [u async for u in teleton_client.iter_participants(channel, limit=None)]
+    TelegramUserMapper.get_users_from_telethon_raw_data(parsed_users)
     return await message.answer(f"Обновил информация о пользователях", reply_markup=admin_tools_menu_kb())
