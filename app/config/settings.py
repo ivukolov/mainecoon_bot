@@ -17,6 +17,7 @@ ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 ## ПАРАМЕТРЫ АДМИНИСТРАТОРА КАНАЛА
 ADMIN_ID: Final[int] = int(os.getenv("ADMIN_ID"))
 ADMIN_USERNAME: Final[str] = os.getenv("ADMIN_USERNAME")
+ADMIN_PASSWORD: Final[str] = os.getenv("ADMIN_PASSWORD")
 # BOT_ID = 7714336436
 # BOT_FIRST_NAME = "Кото-Вет Помощник"
 # BOT_USERNAME = 'CatVetHelperBot'
@@ -60,7 +61,9 @@ USERNAME_LENGTH: Final[int] = 100
 USER_INFO_LENGTH: Final[int] = 100
 USER_FIRST_NAME_LENGTH: Final[int] = 100
 USER_LAST_NAME_LENGTH: Final[int] = 100
+USER_PASSWORD_HASH_LENGTH: Final[int] = 255
 LANG_CODE_LENGTH: Final[int] = 10
+PHONE_LENGTH: Final[int] = 25
 # Tag
 TAG_NAME_LENGTH: Final[int] = 30
 TAG_EMOJI_LENGTH: Final[int] = 14
