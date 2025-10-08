@@ -8,6 +8,9 @@ from pydantic import ValidationError
 
 from mappers import schemas
 
+from database.users.roles import UserRole
+from mappers.schemas import TelegramUsersListDTO
+
 logger = getLogger(__name__)
 
 class TelegramMessageMapper:
@@ -117,11 +120,11 @@ class TelegramMessageMapper:
 
 
 class TelegramUserMapper:
-    """Маппер для конвертации telethon User/Chat в DTO."""
+    """Маппер для конвертации telethon User в DTO."""
 
     @staticmethod
-    def from_telethon_raw_data(
-            entity: t.Union[tt_types.User, tt_types.Chat, tt_types.Channel]
+    def get_user_from_telethon_raw_data(
+            entity: tt_types.User
     ) -> schemas.TelegramUserDTO:
         """Конвертирует telethon сущность в DTO."""
 
@@ -132,24 +135,25 @@ class TelegramUserMapper:
             username=getattr(entity, 'username', None),
             first_name=getattr(entity, 'first_name', None),
             last_name=getattr(entity, 'last_name', None),
-            user_type=user_type,
-            is_bot=getattr(entity, 'bot', False),
-            is_premium=getattr(entity, 'premium', False),
+            contact=getattr(entity, 'contact', None),
+            mutual_contact=getattr(entity, 'mutual_contact', None),
             phone=getattr(entity, 'phone', None),
-            lang_code=getattr(entity, 'lang_code', None),
-            title=getattr(entity, 'title', None),
-            participants_count=getattr(entity, 'participants_count', None),
-            description=getattr(entity, 'about', None),
+            access_hash=getattr(entity, 'access_hash', None),
+            role=user_type,
+            is_premium=getattr(entity, 'premium', False),
             raw_data=entity.to_dict() if hasattr(entity, 'to_dict') else {}
         )
 
     @staticmethod
-    def _get_entity_type(entity) -> schemas.UserType:
+    def get_users_from_telethon_raw_data(entity_list: t.List[tt_types.User]):
+        users_list_dto = TelegramUsersListDTO()
+        for entity in entity_list:
+            dto = TelegramUserMapper.get_user_from_telethon_raw_data(entity)
+            users_list_dto.add_users(dto)
+        print(users_list_dto)
+
+
+    @staticmethod
+    def _get_entity_type(entity) -> UserRole:
         """Определяет тип сущности."""
-        if isinstance(entity, tt_types.User):
-            return schemas.UserType.BOT if getattr(entity, 'bot', False) else schemas.UserType.USER
-        elif isinstance(entity, tt_types.Channel):
-            return schemas.UserType.SUPERGROUP if getattr(entity, 'megagroup', False) else schemas.UserType.CHANNEL
-        elif isinstance(entity, tt_types.Chat):
-            return schemas.UserType.GROUP
-        return schemas.UserType.USER
+        return UserRole.BOT if getattr(entity, 'bot', True) else UserRole.BOT
