@@ -10,7 +10,7 @@ from utils.parsers import TextParser, TextCleaner
 from config import settings
 from database import Post, Tag, User
 from mappers.telegram import TelegramMessageMapper
-from utils.bot_utils import get_admin_user
+from utils.bot_utils import get_or_create_admin_user
 
 
 
@@ -57,7 +57,7 @@ class MessagesService:
             settings.POST_TITLE_LENGTH
         )
         tag_objects = await self.make_tags_from_message(message.text)
-        author = self.bot_user or await get_admin_user(self.session)
+        author = self.bot_user or await get_or_create_admin_user(self.session)
         post, _ = await Post.create_or_update(
             session=self.session,
             id=message.id,
