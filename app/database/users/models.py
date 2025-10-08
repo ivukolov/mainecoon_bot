@@ -39,7 +39,7 @@ user_invites = sa.Table(
         comment='Кто пригласил'
     ),
     sa.CheckConstraint('user_invited != user_inviting', name='check_different_users'),
-    sa.UniqueConstraint('user_invited', 'user_inviting')
+    sa.UniqueConstraint('user_invited', 'user_inviting'),
 )
 
 
@@ -57,6 +57,24 @@ class User(BaseModel):
         "help_text": "Уникальный tg id для рассылки и идентификации"
         }
     )
+    username: Mapped[str] = mapped_column(
+        sa.String(settings.USERNAME_LENGTH), nullable=False, unique=True
+    )
+    password: Mapped[str] = mapped_column(sa.String(settings.USER_PASSWORD_HASH_LENGTH), nullable=True, unique=False)
+    first_name: Mapped[t.Optional[str]] = mapped_column(
+        sa.String(settings.USER_FIRST_NAME_LENGTH), nullable=True, unique=False
+    )
+    last_name: Mapped[t.Optional[str]] = mapped_column(
+        sa.String(settings.USER_LAST_NAME_LENGTH), nullable=True, unique=False
+    )
+    contact: Mapped[t.Optional[bool]] = mapped_column(sa.Boolean, nullable=True, unique=False)
+    mutual_contact: Mapped[t.Optional[bool]] = mapped_column(sa.Boolean, nullable=True, unique=False)
+    phone: Mapped[t.Optional[str]] = mapped_column(sa.String(settings.PHONE_LENGTH), nullable=True, unique=False)
+    language_code: Mapped[str] = mapped_column(
+        sa.String(settings.LANG_CODE_LENGTH), nullable=True, unique=False
+    )
+    access_hash: Mapped[str] = mapped_column(sa.String(settings.USER_PASSWORD_HASH_LENGTH), nullable=True, unique=False)
+    is_premium: Mapped[t.Optional[bool]] = mapped_column(sa.Boolean, nullable=True, unique=False)
     role: Mapped[UserRole] = mapped_column(
         sa.Enum(UserRole),
         nullable=False,
@@ -69,20 +87,7 @@ class User(BaseModel):
          f": {', '.join([name.value for name in UserRole])}"
         }
     )
-    username: Mapped[str] = mapped_column(
-        sa.String(settings.USERNAME_LENGTH), nullable=False, unique=True
-    )
     email: Mapped[str] = mapped_column(sa.String(255), unique=True, nullable=True,)
-    password: Mapped[str] = mapped_column(sa.String(255), nullable=True, unique=False)
-    first_name: Mapped[str] = mapped_column(
-        sa.String(settings.USER_FIRST_NAME_LENGTH), nullable=True, unique=False
-    )
-    last_name: Mapped[str] = mapped_column(
-        sa.String(settings.USER_LAST_NAME_LENGTH), nullable=True, unique=False
-    )
-    language_code: Mapped[str] = mapped_column(
-        sa.String(settings.LANG_CODE_LENGTH), nullable=True, unique=False
-    )
     info: Mapped[str] = mapped_column(
         sa.String(settings.USER_INFO_LENGTH), nullable=True, unique=False
     )
@@ -108,11 +113,11 @@ class User(BaseModel):
         return f'<Пользователь: @{self.username} "{self.first_name} {self.last_name}">'
 
     @staticmethod
-    def get_hash_from_password(password):
+    def get_password_hash(password):
         return settings.PWD_CONTEXT.hash(password)
 
     def set_password(self, password):
-        self.password = self.get_hash_from_password(password)
+        self.password = self.get_password_hash(password)
 
     def verify_password(self, password) -> bool:
         try:
@@ -153,6 +158,26 @@ class User(BaseModel):
         if not inviting_user:
             raise ads.UserNotFoundError()
         await self.add_invited_user(session, inviting_user)
+
+    @classmethod
+    async def bulk_get_or_create_users(cls, session, users_id: t.Set[str]) -> t.Dict[str, 'User']:
+        if not users_id:
+            return {}
+
+        existing_users_stmt = sa.select(cls).where(cls.id.in_(users_id))
+        existing_users_result = await session.execute(existing_users_stmt)
+        existing_users = {user.name: user for user in existing_users_result.scalars()}
+        users_to_create = users_id - set(existing_users.keys())
+        if users_to_create:
+            new_users = []
+            for user in users_to_create:
+                new_user = User(id=user)
+                new_users.append(new_user)
+                existing_users[user] = new_user
+
+            session.add_all(new_users)
+            await session.flush()  # Сохраняем, чтобы получить IDs
+        return existing_users
 
 
 
