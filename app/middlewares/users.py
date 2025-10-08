@@ -28,14 +28,10 @@ class UserMiddleware(BaseMiddleware):
                     'last_name': telegram_user.last_name,
                     'role': UserRole.BOT if telegram_user.is_bot else UserRole.USER,
                     'username': telegram_user.username,
-                    'language_code': telegram_user.language_code,
                 })
                 data["tg_user"] = user
         except Exception:
             logger.error(
                 'Middleware error. Во время получения информации о пользователе возникла ошибка', exc_info=True
             )
-
-
-
         return await handler(event, data)
