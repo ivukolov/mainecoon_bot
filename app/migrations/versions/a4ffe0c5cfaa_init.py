@@ -1,8 +1,8 @@
-"""init comit
+"""init
 
-Revision ID: 12000203ee54
+Revision ID: a4ffe0c5cfaa
 Revises: 
-Create Date: 2025-10-06 15:03:01.906463
+Create Date: 2025-10-09 16:11:59.702486
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '12000203ee54'
+revision: str = 'a4ffe0c5cfaa'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -52,13 +52,18 @@ def upgrade() -> None:
     op.create_index(op.f('ix_tags_name'), 'tags', ['name'], unique=True)
     op.create_table('users',
     sa.Column('id', sa.BigInteger(), autoincrement=False, nullable=False),
-    sa.Column('role', sa.Enum('ADMIN', 'USER', 'GUEST', 'BOT', name='userrole'), server_default='USER', nullable=False),
     sa.Column('username', sa.String(length=100), nullable=False),
-    sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('password', sa.String(length=255), nullable=True),
     sa.Column('first_name', sa.String(length=100), nullable=True),
     sa.Column('last_name', sa.String(length=100), nullable=True),
+    sa.Column('contact', sa.Boolean(), nullable=True),
+    sa.Column('mutual_contact', sa.Boolean(), nullable=True),
+    sa.Column('phone', sa.String(length=25), nullable=True),
     sa.Column('language_code', sa.String(length=10), nullable=True),
+    sa.Column('access_hash', sa.BIGINT(), nullable=True),
+    sa.Column('is_premium', sa.Boolean(), nullable=True),
+    sa.Column('role', sa.Enum('ADMIN', 'USER', 'GUEST', 'BOT', name='userrole'), server_default='USER', nullable=False),
+    sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('info', sa.String(length=100), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
