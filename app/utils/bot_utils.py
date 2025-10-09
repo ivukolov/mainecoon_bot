@@ -1,41 +1,112 @@
+import asyncio
 from logging import getLogger
 import typing as t
 from typing import Any, Coroutine
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import Bot
+from aiogram.client.session import aiohttp
 from aiogram.enums import ChatMemberStatus
 from aiogram.types import ChatMember, ChatInviteLink
 
+from utils.cache import RedisCache
 from database.users.models import User
 from database.users.roles import UserRole
 from config import settings
 from exceptions.ads import DoubleSubscriptionError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = getLogger(__name__)
 
-async def get_bot_user(session: AsyncSession) -> User:
-   bot_user, _ = await User.get_or_create(
+async def bot_send_message(text: str) -> None:
+   url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
+   payload = {
+      'chat_id': settings.ADMIN_ID,
+      'text': text
+   }
+   async with aiohttp.ClientSession() as session:
+      async with session.post(url, json=payload) as response:
+         return await response.json()
+
+
+async def get_updates(offset=None):
+   url =  url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/getUpdates"
+   params = {
+      'timeout': 30,  # Long polling timeout
+      'offset': offset
+   }
+
+   async with aiohttp.ClientSession() as session:
+      async with session.get(url, params=params) as response:
+         if response.status == 200:
+            data = await response.json()
+            return data.get('result', [])
+         else:
+            print(f"Error: {response.status}")
+            return []
+
+async def get_confirm_code():
+   cash = RedisCache()
+   redis_key = f"{settings.ADMIN_ID}_teletone_code"
+   cached_keys = await cash.get_json(redis_key)
+   last_update_id = cached_keys.get('last_update_id') if cached_keys else 1
+   await bot_send_message('Введите telegram код')
+   while True:
+      try:
+         updates = await get_updates(last_update_id)
+         for update in updates:
+            last_update_id = update['update_id'] + 1
+            message = update.get('message')
+            if message and message.get('chat'):
+               chat_id = message['chat'].get('id')
+               if chat_id == settings.ADMIN_ID:
+                  code = message.get('text')
+                  try:
+                     code = str(code.strip())
+                  except ValueError:
+                     await bot_send_message('Код должен быть в виде цифр')
+                     continue
+                  except Exception as e:
+                     await bot_send_message(f'Неизвестная ошибка {e}, попробуйте ещё раз')
+                     continue
+                  data = {'code': [code], 'last_update_id': last_update_id}
+                  await cash.set_json(redis_key, data)
+                  await bot_send_message('Код принят, обрабатываем!')
+                  print(code)
+                  return code
+                  # if cached_keys and code in cached_keys['code']:
+                  #    continue
+                  # data = {'code': [code], 'last_update_id': last_update_id}
+                  # if cached_keys:
+                  #    data['code'] + cached_keys.get('code', [])
+                  # await cash.set_json(redis_key, data)
+
+
+      except Exception as e:
+         logger.error(f"Error: {e}")
+         await asyncio.sleep(5)
+
+async def get_or_create_admin_user(session: AsyncSession) -> User:
+   admin, _ = await User.get_or_create(
       session=session,
-      id=settings.BOT_ID,
+      id=settings.ADMIN_ID,
       defaults={
-         'first_name': settings.BOT_FIRST_NAME,
-         'username': settings.BOT_USERNAME,
-         'info': settings.BOT_INFO,
+         'username': settings.ADMIN_USERNAME,
          'is_active': True,
-         'role': UserRole.BOT
+         'role': UserRole.ADMIN,
+         'password': User.get_password_hash(settings.ADMIN_PASSWORD)
       }
    )
-   return bot_user
+   return admin
 
 
 def reverse_tg_url(login: str) -> str:
    return f"https://t.me/{login}"
 
-def get_group_login() -> str:
-   return f"@{settings.CHANEL_USERNAME}"
+async def get_group_login(bot: Bot) -> str:
+   chat = await bot.get_chat(settings.CHANNEL_ID)
+   return f"@{chat.username}"
 
-def get_referral(user_id: str, bot_name: str) -> str:
+def get_referral(user_id: int, bot_name: str) -> str:
    return  f"https://t.me/{bot_name}?start={user_id}"
 
 

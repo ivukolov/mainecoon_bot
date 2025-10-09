@@ -20,7 +20,7 @@ def main_menu_kb(additional_buttons: list = None) -> ReplyKeyboardMarkup:
         [KeyboardButton(text=MainMenu.BLOG.value.name)],
         [KeyboardButton(text=MainMenu.PARTNERS.value.name)],
         [KeyboardButton(text=MainMenu.ADS.value.name)],
-        [KeyboardButton(text=MainMenu.INTERACTIVITY.value.name)],
+        [KeyboardButton(text=MainMenu.INTERACTIVES.value.name)],
         [KeyboardButton(text=MainMenu.ABOUT.value.name)]
 
     ] + [additional_buttons]
@@ -30,16 +30,6 @@ def main_menu_kb(additional_buttons: list = None) -> ReplyKeyboardMarkup:
 def admin_mine_menu_kb() -> ReplyKeyboardMarkup:
     """Главное меню администратора"""
     return main_menu_kb(additional_buttons=[KeyboardButton(text=MainMenu.ADMIN.value.name)])
-
-
-def admin_tools_menu_kb() -> ReplyKeyboardMarkup:
-    """Панель инструемнов администратора"""
-    buttons = [
-        [KeyboardButton(text=AdminMenu.CHEK_POSTS)],
-        [KeyboardButton(text=AdminMenu.PARSE_POSTS)]
-    ]
-    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
-
 
 def cancel_kb() -> ReplyKeyboardMarkup:
     """Клавиатура для отмены действия"""

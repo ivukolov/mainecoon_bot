@@ -7,20 +7,33 @@ from sqladmin import Admin
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
+from utils.bot_utils import get_or_create_admin_user
 from config import settings
 from core.models import BaseModel
-from database.db import engine
+from database.db import engine, get_db_session_directly
 from web.admin import setup_admin_panel
 from web.routes import router
 from web.midleware import DatabaseMiddleware
 
 logger = getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    session = await get_db_session_directly()
+    await get_or_create_admin_user(session)
+    yield
+    session.close()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     debug=settings.DEBUG,
     engine=engine,
+    lifespan=lifespan,
     middleware=[
-        Middleware(DatabaseMiddleware),
+        Middleware(
+            DatabaseMiddleware
+        ),
         Middleware(
             CORSMiddleware, allow_origins=["http://localhost", "http://127.0.0.1"]
         ),

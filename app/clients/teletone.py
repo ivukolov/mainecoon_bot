@@ -5,9 +5,11 @@ from pathlib import Path
 from typing import Final, Optional, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from telethon.sync import TelegramClient
 from telethon.sessions import Session, StringSession
 
+from utils.bot_utils import bot_send_message, get_confirm_code
 from utils.decorators import async_timer
 from database.blog.models import Tag, Post
 from database.users.models import User, TelegramSession
@@ -23,6 +25,7 @@ class TeletonClientManager:
         self.api_id: Final[int] = int(settings.TG_API_ID)
         self.api_hash: Final[str] = settings.TG_API_HASH
         self.phone: Final[str] = settings.TG_PHONE
+        self.password: Final[str] = settings.TG_PASSWORD
         self.session_file: Path = Path('session_config.json')
         self._client: t.Optional[TelegramClient] = None
         self._session_name: str = 'tg_session_teletone'
@@ -74,20 +77,23 @@ class TeletonClientManager:
 
     async def _save_session(self) -> bool:
         """Метод сохранения сесии"""
-        session_name = settings.TELETONE_SESSION_NAME
+        db_session = await get_db_session_directly()
         try:
-            session_data = {
-                session_name: self.client.session.save()
-            }
-        except Exception:
-            logger.error('Не удалось инициализировать сессию', exc_info=True)
+            tg_session_hash = self.client.session.save()
+        except Exception as e:
+            logger.error(f'Не удалось инициализировать сессию {e}', exc_info=True)
             return False
         try:
-            with open('teletone_session.json', 'w') as f:
-                json.dump(session_data, f)
-        except Exception:
-            logger.error('Не удалось сохранить json файл сессии', exc_info=True)
-            return False
+            async with db_session as db:
+                await TelegramSession.create_or_update(session=db,
+                    name=settings.TELETONE_SESSION_NAME, defaults={
+                        'hash': tg_session_hash
+                    }
+                )
+                await db.commit()
+                logger.info('Новая сессия инициализирована и сохранена в базу.')
+        except Exception as e:
+            logger.error('Ошибка сохранения сессии в БД', exc_info=True)
         return True
 
     async def _initialize_client(self):
@@ -100,6 +106,7 @@ class TeletonClientManager:
         # 3. Проверяем авторизацию
         if not await self._client.is_user_authorized():
             logger.info("Клиенту Telegram требуется аутентификация")
-            self._client.start(phone=self.phone)
+            await bot_send_message('Клиенту Telegram требуется аутентификация, введите код в консоли!')
+            await self._client.start(phone=self.phone, password=self.password or None)
             await self._save_session() # Сохраняем новую сессию
         logger.info("Клиент Telegram успешно инициализирован и авторизован.")

@@ -11,7 +11,7 @@ from aiogram.exceptions import TelegramServerError, TelegramNotFound
 from fastapi import FastAPI
 from sqladmin import Admin
 
-from database.db import session_factory
+from database.db import session_factory, get_db_session_directly
 from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddleware, UserMiddleware
 from clients.teletone import TeletonClientManager
 from web.app import run_fastapi

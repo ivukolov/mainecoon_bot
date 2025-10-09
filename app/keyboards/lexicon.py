@@ -8,6 +8,8 @@ from utils.parsers import TextParser
 class Button(BaseModel):
     name: str
 
+class CallbackButton(Button):
+    callback: str = Field(..., description="callback data")
 
 class TagButton(Button):
     tag: str = Field(..., description="Тэг для выборки из бд")
@@ -20,6 +22,13 @@ class TagButton(Button):
         return TextParser.tag_normalize(tag)
 
 
+class AdsButton(CallbackButton):
+    """Кнопки для рекламы"""
+
+
+class InteractivesButton(CallbackButton):
+    """Кнопки для админ меню"""
+
 
 
 
@@ -27,16 +36,14 @@ class MainMenu(Enum):
     BLOG = Button(name="🐾 Блог (рубрики)")
     PARTNERS = Button(name="🛍 Партнёры и магазины")
     ADS = Button(name="📢 Объявления (купить/продать)")
-    INTERACTIVITY = Button(name="🎉 Интерактивы (конкурсы)")
+    INTERACTIVES = Button(name="🎉 Интерактивы (конкурсы)")
     ABOUT = Button(name="ℹ️ О канале")
     ADMIN = Button(name="👨🏻‍💻 Администрация")
 
 
-class AdminMenu(StrEnum):
-    CHEK_POSTS = 'Проверить актуальность постов в базе'
-    PARSE_POSTS = 'Актуализировать все посты'
-    ADD_NEW_POSTS = 'Добавить только новые посты'
-    UPDATE_USERS = 'Обновить список пользователей'
+class AdsMenu(Enum):
+    GET_REFERRAL = AdsButton(name='Получить реферальную ссылку', callback='get_referral')
+    DONATE = AdsButton(name='Оплатить', callback='donate')
 
 
 class ActionButtons(StrEnum):
@@ -58,28 +65,13 @@ class KeyboardBlog(Enum):
     BLOG_NUTRITION = TagButton(name='КотоПитание 🍽', tag='#КотоПитание')
     BLOG_HEALTH = TagButton(name='КотоЗдоровье 🏥', tag='#КотоЗдоровье')
 
+# ADMIN
+class AdminMenu(Enum):
+    ADD_INTERACTIVES = Button(name='Создать Интерактив')
+    PARSE_POSTS =  Button(name='Актуализировать все посты')
+    UPDATE_USERS =  Button(name='Обновить список пользователей')
 
-# class KeyboardBlog(StrEnum):
-#     BLOG_PSYCHOLOGY_BTN = 'КотоПсихология 🧠'
-#     BLOG_PSYCHOLOGY_TAG = '#КотоПсихология'
-#     BLOG_PSYCHOLOGY_CALLBACK = 'blog_psychology'
-#
-#     BLOG_EXHIBITIONS_BTN = 'КотоВыставки 🎉'
-#     BLOG_EXHIBITIONS_TAG = '#КотоВыставки'
-#     BLOG_EXHIBITIONS_CALLBACK = 'blog_exhibitions'
-#
-#     BLOG_NUTRITION_BTN = 'КотоПитание 🍽'
-#     BLOG_NUTRITION_TAG = '#КотоПитание'
-#     BLOG_NUTRITION_CALLBACK = 'blog_nutrition'
-#
-#     BLOG_HEALTH_BTN = 'КотоЗдоровье 🏥'
-#     BLOG_HEALTH_TAG = '#КотоЗдоровье'
-#     BLOG_HEALTH_CALLBACK = 'blog_health'
-#
-#     @classmethod
-#     def get_callback_list(cls):
-#         callback_list: List = []
-#         for name, member in cls.__members__.items():
-#             if name.endswith("_CALLBACK"):
-#                 callback_list.append(member.value)
-#         return callback_list
+class AdminInteractives(Enum):
+    POLL = InteractivesButton(name='Создать голосование', callback='poll')
+    QUIZ = InteractivesButton(name="Создать викторину", callback='quiz')
+    COMPETITIONS = InteractivesButton(name="Создать голосование", callback='competitions')

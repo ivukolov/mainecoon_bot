@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 from database.users.models import User
 from database.users.roles import UserRole
 from config import settings
-from utils.bot_utils import get_bot_user
 
 logger = logging.getLogger(__name__)
 
@@ -29,16 +28,10 @@ class UserMiddleware(BaseMiddleware):
                     'last_name': telegram_user.last_name,
                     'role': UserRole.BOT if telegram_user.is_bot else UserRole.USER,
                     'username': telegram_user.username,
-                    'language_code': telegram_user.language_code,
                 })
                 data["tg_user"] = user
-            else:
-                data["tg_user"] = await get_bot_user(session)
         except Exception:
             logger.error(
                 'Middleware error. Во время получения информации о пользователе возникла ошибка', exc_info=True
             )
-
-
-
         return await handler(event, data)
