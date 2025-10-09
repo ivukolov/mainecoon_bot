@@ -1,11 +1,13 @@
 from logging import getLogger
-
-from pydantic import BaseModel, Field, ValidationError
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Set, Tuple
 from enum import Enum
 
+from pydantic import BaseModel, Field, ValidationError, model_validator, field_validator
+
 from database.users.roles import UserRole
+from database import User
+from utils.identifiers import generate_username_from_id
 
 logger = getLogger(__name__)
 
@@ -36,21 +38,38 @@ class MessageMetrics(BaseModel):
 
 class TelegramUserDTO(BaseModel):
     """DTO для представления пользователя/чата из Telegram."""
+    class Config:
+        from_attributes = True
 
     # Основные идентификаторы
-    id: int
-    username: Optional[str] = Field(default=None, description="Логин")
+    id: int = Field(..., description="Логин")
+    username: Optional[str] = Field(..., description="Логин")
     first_name: Optional[str] = Field(default=None, description="Имя")
     last_name: Optional[str] = Field(default=None, description="Фамилия")
     # Контактная информация
-    contact: Optional[str] = Field(default=None, description="Находится в ваших контактах")
-    mutual_contact: Optional[str] = Field(default=None, description="Взаимный контакт")
+    contact: Optional[bool] = Field(default=None, description="Находится в ваших контактах")
+    mutual_contact: Optional[bool] = Field(default=None, description="Взаимный контакт")
     phone: Optional[str] = Field(default=None, description="Номер телефона")
-    access_hash: Optional[str] = Field(default=None, description="Хэш для доступа к пользователю")
+    access_hash: Optional[int] = Field(default=None, description="Хэш для доступа к пользователю")
+    is_active: bool = Field(default=True, description="Активный пользователь тг группы")
+
+    @field_validator('username', mode='before')
+    @classmethod
+    def set_username_based_on_hash(cls, username: Optional[str], info) -> str:
+        if not username:
+            try:
+                id = info.data['id']
+                username = generate_username_from_id(id)
+            except ValueError:
+                raise
+        return username
 
     # Тип и статус
     role: UserRole = Field(default=UserRole.USER, description="Тип пользователя")
     is_premium: bool = Field(default=False, description="Подписка на телеграмм преимум")
+
+    def get_model_dump(self) -> User:
+        return self.model_dump()
 
     @property
     def display_name(self) -> str:
@@ -68,17 +87,27 @@ class TelegramUserDTO(BaseModel):
 
 class TelegramUsersListDTO(BaseModel):
     users: List[TelegramUserDTO] = Field(default_factory=list)
-    total_count: int = Field(default=0, ge=0, description="Количество обработанных сообщений")
+
+    @property
+    def total_count(self):
+        return len(self.users)
+
+    def add_user(self, user: TelegramUserDTO):
+            self.users.append(user)
 
     def add_users(self, users: List[TelegramUserDTO]):
         for user in users:
             self.users.append(user)
+
+    def get_model_dump_list(self) -> List[Dict[str, Any]]:
+        return [user.model_dump() for user in self.users]
 
 class MessageMetrics(BaseModel):
     """Метрики сообщения."""
     views: Optional[int] = Field(default=None, ge=0, description="Количество просмотров")
     forwards: Optional[int] = Field(default=None, ge=0, description="Количество пересылок")
     replies: Optional[int] = Field(default=None, ge=0, description="Количество ответов")
+
 
 class TelegramMessageDTO(BaseModel):
     """DTO для представления сообщения из Telegram."""
