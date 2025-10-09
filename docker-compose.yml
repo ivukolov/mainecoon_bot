@@ -19,6 +19,7 @@ services:
   bot:
     build: .
     container_name: mainecoon_bot
+    command: bash -c "alembic upgrade head && python main.py"
     restart: unless-stopped
     env_file:
       - .env
@@ -26,7 +27,7 @@ services:
 #    ports:
 #      - "8000:8000"
     volumes:
-      - .app/logs/:/app/logs/
+      - ./app/logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
