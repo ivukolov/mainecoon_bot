@@ -20,6 +20,8 @@ services:
     build: .
     container_name: mainecoon_bot
     command: bash -c "alembic upgrade head && python main.py"
+    stdin_open: true
+    tty: true
     restart: unless-stopped
     env_file:
       - .env
