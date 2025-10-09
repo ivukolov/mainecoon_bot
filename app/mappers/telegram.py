@@ -141,7 +141,7 @@ class TelegramUserMapper:
             access_hash=getattr(entity, 'access_hash', None),
             role=user_type,
             is_premium=getattr(entity, 'premium', False),
-            raw_data=entity.to_dict() if hasattr(entity, 'to_dict') else {}
+            is_active=True,
         )
 
     @staticmethod
@@ -149,11 +149,11 @@ class TelegramUserMapper:
         users_list_dto = TelegramUsersListDTO()
         for entity in entity_list:
             dto = TelegramUserMapper.get_user_from_telethon_raw_data(entity)
-            users_list_dto.add_users(dto)
-        print(users_list_dto)
+            users_list_dto.add_user(dto)
+        return users_list_dto
 
 
     @staticmethod
     def _get_entity_type(entity) -> UserRole:
         """Определяет тип сущности."""
-        return UserRole.BOT if getattr(entity, 'bot', True) else UserRole.BOT
+        return UserRole.BOT if getattr(entity, 'bot', True) else UserRole.USER
