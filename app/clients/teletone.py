@@ -107,6 +107,10 @@ class TeletonClientManager:
         if not await self._client.is_user_authorized():
             logger.info("Клиенту Telegram требуется аутентификация")
             await bot_send_message('Клиенту Telegram требуется аутентификация, введите код в консоли!')
+        try:
             await self._client.start(phone=self.phone, password=self.password or None)
+        except PhoneCodeInvalidError as e:
+            logger.error('Неверно введён telegram код, авторизация не выполнена')
+        else:
             await self._save_session() # Сохраняем новую сессию
-        logger.info("Клиент Telegram успешно инициализирован и авторизован.")
+            logger.info("Клиент Telegram успешно инициализирован и авторизован.")
