@@ -68,9 +68,7 @@ class KeyboardBlog(Enum):
 # ADMIN
 class AdminMenu(Enum):
     ADD_INTERACTIVES = Button(name='Создать Интерактив')
-    CHEK_POSTS = Button(name='Проверить актуальность постов в базе')
     PARSE_POSTS =  Button(name='Актуализировать все посты')
-    ADD_NEW_POSTS =  Button(name='Добавить только новые посты')
     UPDATE_USERS =  Button(name='Обновить список пользователей')
 
 class AdminInteractives(Enum):
