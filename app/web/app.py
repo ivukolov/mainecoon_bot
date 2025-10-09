@@ -7,7 +7,7 @@ from sqladmin import Admin
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
-from app.utils.bot_utils import get_or_create_admin_user
+from utils.bot_utils import get_or_create_admin_user
 from config import settings
 from core.models import BaseModel
 from database.db import engine, get_db_session_directly
