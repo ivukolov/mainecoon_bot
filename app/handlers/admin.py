@@ -50,7 +50,7 @@ async def admin_menu(message: Message, tg_user: User):
 @admin_router.message(F.text == AdminMenu.ADD_INTERACTIVES.value.name)
 @admin_required
 async def admin_menu_make_interactives(message: Message, db: AsyncSession, tg_user: User):
-    return await message.answer('Выберите тип интеракитва', reply_markup=maike_interactives_kb())
+    return await message.answer('Выберите тип интерактива', reply_markup=maike_interactives_kb())
 
 
 @admin_router.message(F.text == AdminMenu.PARSE_POSTS.value.name)
@@ -58,30 +58,20 @@ async def admin_menu_make_interactives(message: Message, db: AsyncSession, tg_us
 async def admin_menu_parse_posts(message: Message, db: AsyncSession, teleton_client: TelegramClient, tg_user: User):
     channel = await teleton_client.get_entity(settings.CHANNEL_ID)
     await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
+    logger.info('Запущен процесс обновления постов и тэгов')
     parsed_messages = [m async for m in teleton_client.iter_messages(
         channel,
         limit=None,
     )]
+    logger.info(f'Из канала загружено {len(parsed_messages)} постов, приступаю к обработке')
     service = MessagesService(session=db, messages=parsed_messages, is_aiogram=False)
     try:
         await service.service_and_save_messages()
     except Exception as e:
         logger.error(e, exc_info=True)
+        return await message.answer(f"Не удалось актуализировать все посты {e}", reply_markup=admin_tools_menu_kb())
+    logger.info('Все посты актуализированные')
     return await message.answer(f"Все посты актуализированные!", reply_markup=admin_tools_menu_kb())
-
-@admin_router.message(F.text == AdminMenu.ADD_NEW_POSTS.value.name)
-@admin_required
-async def admin_menu_add_new_posts(message: Message,db: AsyncSession, teleton_client: TelegramClient, tg_user: User):
-    channel = await teleton_client.get_entity(settings.CHANNEL_ID) # Вынести в отдельный метод
-    await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
-    last_obj = await Post.get_last_post(db)
-    # Получаем генератор с новыми сообщениями!
-    parsed_messages = [m async for m in teleton_client.iter_messages(
-        channel,
-        limit=None,
-        min_id=last_obj.id + 1
-    )]
-    return await message.answer(f"Добавил новые посты босс!", reply_markup=admin_tools_menu_kb())
 
 
 @admin_router.message(F.text == AdminMenu.UPDATE_USERS.value.name)
@@ -96,5 +86,12 @@ async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_c
             reply_markup=admin_tools_menu_kb()
         )
     parsed_users = [u async for u in teleton_client.iter_participants(channel, limit=None)]
-    TelegramUserMapper.get_users_from_telethon_raw_data(parsed_users)
+    users_dto = TelegramUserMapper.get_users_from_telethon_raw_data(parsed_users)
+    users_list= users_dto.get_model_dump_list()
+    try:
+        await User.on_conflict_do_update_users(session=db, users_dict_list=users_list)
+    except Exception as e:
+        await db.rollback()
+        print(f"Ошибка: {e}")
+        raise
     return await message.answer(f"Обновил информация о пользователях", reply_markup=admin_tools_menu_kb())
