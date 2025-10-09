@@ -11,9 +11,12 @@ class PostExcludeMixin:
 class UserAdmin(PostExcludeMixin, ModelView, model=User):
     name = "Пользователь"
     name_plural = "Пользователи"
-    column_list = ['id', 'is_active', 'first_name', 'last_name', 'role', 'info']
-    form_columns = ['id', 'is_active', 'first_name', 'last_name', 'role', 'info']
+    column_list = ['id', 'username', 'is_active', 'first_name', 'last_name', 'role', 'info', 'invited_users_count']
+    form_columns = ['id', 'username', 'is_active', 'first_name', 'last_name', 'role', 'info']
     can_export = True
+    column_sortable_list = ["id", 'role', 'is_active']
+    column_default_sort = [('role', True), ('id', True)]
+    column_searchable_list = ["id", "username", "first_name", "last_name"]
 
 
 class CategoryAdmin(PostExcludeMixin, ModelView, model=Category):
@@ -26,7 +29,7 @@ class CategoryAdmin(PostExcludeMixin, ModelView, model=Category):
 class TagAdmin(PostExcludeMixin, ModelView, model=Tag):
     name = "Тэг"
     name_plural = "Тэги"
-    column_list = ['id', 'name', 'emoji']
+    column_list = ['id', 'name']
     can_export = True
 
 
