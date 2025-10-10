@@ -31,14 +31,21 @@ async def main():
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     storage = RedisStorage.from_url(settings.REDIS_STORAGE)
     dp = Dispatcher(storage=storage)
-    tt_client_manager = TeletonClientManager()
-    client = await tt_client_manager.get_client()
     for router in routers:
         dp.include_router(router)
+    tt_client_manager = TeletonClientManager()
+    try:
+        # Попытка инициализации клиента
+        await tt_client_manager.initialize_client()
+    except Exception:
+        logger.error(
+            "Не удалась инициализация клиента Teletone - "
+            "продолжаем загрузку без него. Парсинг временно недоступен! "
+        )
+    dp.update.middleware(TeletonClientMiddleware(tt_client_manager))
     dp.update.middleware(DatabaseMiddleware(session_factory))
     dp.update.middleware(UserMiddleware())
     dp.update.middleware(BotMiddleware(bot))
-    dp.update.middleware(TeletonClientMiddleware(client))
     try:
         async with asyncio.TaskGroup() as tg:
             tg.create_task(run_fastapi())
