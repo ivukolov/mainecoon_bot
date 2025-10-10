@@ -66,36 +66,44 @@ class User(BaseModel):
         sa.String(settings.USER_PASSWORD_HASH_LENGTH), nullable=True, unique=False, comment="Пароль"
     )
     first_name: Mapped[t.Optional[str]] = mapped_column(
-        sa.String(settings.USER_FIRST_NAME_LENGTH), nullable=True, unique=False
+        sa.String(settings.USER_FIRST_NAME_LENGTH), nullable=True, unique=False,
+        comment='Имя'
     )
     last_name: Mapped[t.Optional[str]] = mapped_column(
-        sa.String(settings.USER_LAST_NAME_LENGTH), nullable=True, unique=False
+        sa.String(settings.USER_LAST_NAME_LENGTH), nullable=True, unique=False,
+        comment='Фамилия'
     )
-    contact: Mapped[t.Optional[bool]] = mapped_column(sa.Boolean, nullable=True, unique=False)
-    mutual_contact: Mapped[t.Optional[bool]] = mapped_column(sa.Boolean, nullable=True, unique=False)
-    phone: Mapped[t.Optional[str]] = mapped_column(sa.String(settings.PHONE_LENGTH), nullable=True, unique=False)
+    contact: Mapped[t.Optional[bool]] = mapped_column(
+        sa.Boolean, nullable=True, unique=False, comment='В вашем списке контактов'
+    )
+    mutual_contact: Mapped[t.Optional[bool]] = mapped_column(
+        sa.Boolean, nullable=True, unique=False, comment='В списке контактов ваших друзей'
+    )
+    phone: Mapped[t.Optional[str]] = mapped_column(
+        sa.String(settings.PHONE_LENGTH), nullable=True, unique=False, comment='Номер телефона'
+    )
     language_code: Mapped[t.Optional[str]] = mapped_column(
-        sa.String(settings.LANG_CODE_LENGTH), nullable=True, unique=False
+        sa.String(settings.LANG_CODE_LENGTH), nullable=True, unique=False, comment='Язык'
     )
-    access_hash: Mapped[t.Optional[int]] = mapped_column(sa.BIGINT, nullable=True, unique=False)
-    is_premium: Mapped[t.Optional[bool]] = mapped_column(sa.Boolean, nullable=True, unique=False)
+    access_hash: Mapped[t.Optional[int]] = mapped_column(
+        sa.BIGINT, nullable=True, unique=False, comment='Hash для отправки сообщений'
+    )
+    is_premium: Mapped[t.Optional[bool]] = mapped_column(
+        sa.Boolean, nullable=True, unique=False, comment='Премиум подписка'
+    )
     role: Mapped[UserRole] = mapped_column(
         sa.Enum(UserRole),
         nullable=False,
         default=UserRole.USER.value,
         server_default=UserRole.USER.value,
         unique = False,
-        info={
-            "verbose_name": "Роль пользователя",
-            "help_text": f"Присваивание роли пользователя"
-         f": {', '.join([name.value for name in UserRole])}"
-        }
+        comment='Роль пользователя'
     )
-    email: Mapped[str] = mapped_column(sa.String(255), unique=True, nullable=True,)
+    email: Mapped[str] = mapped_column(sa.String(255), unique=True, nullable=True, comment='Электронная почта')
     info: Mapped[str] = mapped_column(
-        sa.String(settings.USER_INFO_LENGTH), nullable=True, unique=False
+        sa.String(settings.USER_INFO_LENGTH), nullable=True, unique=False, comment='Доп информация'
     )
-    is_active: Mapped[bool] = mapped_column(nullable=False, default=False)
+    is_active: Mapped[bool] = mapped_column(nullable=False, default=False, comment='Является подписчиком канала')
     posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
     invited_user = relationship(
         'User',

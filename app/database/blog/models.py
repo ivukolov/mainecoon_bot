@@ -32,25 +32,18 @@ class Tag(BaseModel):
         nullable=False,
         index=True,
         unique=True,
-        info={
-        "verbose_name": "Название тэга",
-        "help_text": "Уникальный тэг для постов"
-        }
+        comment='Имя'
     )
     emoji: orm.Mapped[str] = orm.mapped_column(
         sa.Unicode(settings.TAG_EMOJI_LENGTH),
         nullable=True,
         unique=False,
-        info={
-            "verbose_name": "Emoji тэга",
-            "help_text": "Emoji в Unicode для добавления к тэгам"
-        }
     )
     posts: orm.Mapped[t.List["Post"]] = orm.relationship(
         "Post",
         secondary=post_tags,
         back_populates="tags",
-        lazy="selectin"
+        lazy="selectin",
     )
 
 
@@ -88,8 +81,8 @@ class Tag(BaseModel):
 class Category(BaseModel):
     __tablename__ = "categories"
 
-    id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    name: orm.Mapped[str] = orm.mapped_column(sa.String(50), unique=True)
+    id: orm.Mapped[int] = orm.mapped_column(primary_key=True, )
+    name: orm.Mapped[str] = orm.mapped_column(sa.String(50), unique=True, comment='Имя')
     slug: orm.Mapped[str] = orm.mapped_column(sa.String(50), unique=True)
 
     # Отношение один-ко-многим к постам
@@ -121,12 +114,11 @@ class Post(BaseModel):
     # Один к одному.
     author: orm.Mapped[User] = orm.relationship("User", back_populates="posts")
     category: orm.Mapped[Category] = orm.relationship("Category", back_populates="posts")
-
     tags: orm.Mapped[t.List["Tag"]] = orm.relationship(
         "Tag",
         secondary=post_tags,
         back_populates="posts",
-        lazy = "selectin"
+        lazy = "selectin",
     )
 
     def __str__(self):
