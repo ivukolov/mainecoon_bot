@@ -32,7 +32,7 @@ class ColumnLabelsGeneratorMixin:
         return name.replace('_', ' ').title()
 
 
-class UserAdmin(ColumnlabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, ModelView, model=User):
+class UserAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, ModelView, model=User):
     name = "Пользователь"
     name_plural = "Пользователи"
     column_list = ['id', 'username', 'is_active', 'first_name', 'last_name', 'role', 'info', 'invited_users_count']
@@ -77,20 +77,20 @@ class UserAdmin(ColumnlabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, Mod
         # Вызываем родительский метод для сохранения
         await super().on_model_change(data, model, is_created, request)
 
-class CategoryAdmin(PostExcludeMixin, ReadOnlyMixin, ModelView, model=Category):
+class CategoryAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, ModelView, model=Category):
     name = "Категория"
     name_plural = "Категории"
     column_list = ['id', 'name', 'slug']
     can_export = True
 
 
-class TagAdmin(PostExcludeMixin, ReadOnlyMixin, ModelView, model=Tag):
+class TagAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, ModelView, model=Tag):
     name = "Тэг"
     name_plural = "Тэги"
     column_list = ['id', 'name']
     can_export = True
 
-class TelegramSessionAdmin(ReadOnlyMixin, ModelView, model=TelegramSession):
+class TelegramSessionAdmin(ColumnLabelsGeneratorMixin, ReadOnlyMixin, ModelView, model=TelegramSession):
     name = "Сессия"
     name_plural = "Сессии"
     column_list = ['id', 'name']
@@ -106,7 +106,7 @@ class TelegramSessionAdmin(ReadOnlyMixin, ModelView, model=TelegramSession):
 
 
 
-class PostAdmin(ColumnlabelsGeneratorMixin, ReadOnlyMixin, ModelView, model=Post):
+class PostAdmin(ColumnLabelsGeneratorMixin, ReadOnlyMixin, ModelView, model=Post):
     name = "Пост"
     name_plural = "Посты"
     column_list = ['id', 'views', 'forwards' ,'title', 'date']
