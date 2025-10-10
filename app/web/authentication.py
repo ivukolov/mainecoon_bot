@@ -9,20 +9,39 @@ from starlette.requests import Request
 
 from config import settings
 from database import User
+from utils.cache import RedisCache
 
 logger = getLogger(__name__)
 
 class AdminAuth(AuthenticationBackend):
-    async def login(self, request: Request) -> bool:
+    async def login(self, request: Request) -> (bool, dict):
         session: AsyncSession = request.state.db
+        redis_cash: RedisCache = request.state.cash
+        context = {}
         form = await request.form()
         username, password = form["username"], form["password"]
+        context["error"] = "Неверный логин или пароль!"
+        if await self.is_brootforce(redis_cash=redis_cash, username=username):
+            context["error"] = "Превышено число попыток авторизации"
         user: User = await User.one_or_none(session, username=username)
         if user and user.authenticate_user(password):
             access_token = self.generate_jwt_token(str(user.id))
             request.session.update({"token": access_token})
             return True
         logger.warning(f"Неудачная попытка войти в админ панель - пользователь: {username} ")
+        return False, context
+
+    async def is_brootforce(self, redis_cash: RedisCache, username: str) -> bool:
+        key = 'failed_attempts'
+        user_attempts_dict = await redis_cash.get_json(username)
+        if user_attempts_dict:
+            failed_attempts: int = user_attempts_dict.get(key)
+            if failed_attempts >= settings.MAX_FAILED_ATTEMPTS:
+                logger.error(f'Превышено число попыток авторизации пользователя {username}')
+                return True
+            else:
+                failed_attempts+=1
+                await redis_cash.set_json(username, {key: failed_attempts}, ttl=settings.USER_BLOCK_TIMEOUT)
         return False
 
     async def logout(self, request: Request) -> bool:
