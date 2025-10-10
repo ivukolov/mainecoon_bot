@@ -10,15 +10,16 @@ logger = logging.getLogger(__name__)
 
 class TeletonClientMiddleware(BaseMiddleware):
     """Оптимизированный middleware с предварительно созданной фабрикой сессий"""
-    def __init__(self, teleton_client: TeletonClient):
-        self.teleton_client = teleton_client  # Готовая фабрика сессий
+    def __init__(self, teleton_client_manager: TeletonClient):
+        self.teleton_client_manager = teleton_client_manager  # Готовая фабрика сессий
 
     async def __call__(self, handler, event, data):
         try:
-            client = self.teleton_client# 1 вызов фабрики
-            client.parse_mode = settings.PARSE_MODE
+            client = await self.teleton_client_manager.get_client()# 1 вызов фабрики
+            # client.parse_mode = settings.PARSE_MODE
             data["teleton_client"] = client
             return await handler(event, data)
         except Exception:
+            data["teleton_client"] = None
             logger.error(f"Ошибка работы {self.__class__.__name__}", exc_info=True)
             return await handler(event, data)
