@@ -11,6 +11,7 @@ from aiogram.exceptions import TelegramServerError, TelegramNotFound
 from fastapi import FastAPI
 from sqladmin import Admin
 
+from utils.bot_utils import bot_send_message
 from database.db import session_factory, get_db_session_directly
 from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddleware, UserMiddleware
 from clients.teletone import TeletonClientManager
@@ -37,7 +38,8 @@ async def main():
     try:
         # Попытка инициализации клиента
         await tt_client_manager.initialize_client()
-    except Exception:
+    except Exception as e:
+        await bot_send_message(f'Не удалось инициализировать клиент Teletone {e}')
         logger.error(
             "Не удалась инициализация клиента Teletone - "
             "продолжаем загрузку без него. Парсинг временно недоступен! "
