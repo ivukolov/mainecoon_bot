@@ -35,7 +35,15 @@ app = FastAPI(
             DatabaseMiddleware
         ),
         Middleware(
-            CORSMiddleware, allow_origins=["http://localhost", "http://127.0.0.1"]
+            CORSMiddleware, allow_origins=[
+                "http://localhost",
+                "http://127.0.0.1",
+                f"http://{settings.DOMAIN_NAME}",
+                f"https://{settings.DOMAIN_NAME}",
+            ],
+        allow_credentials = True,
+        allow_methods = ["*"],
+        allow_headers = ["*"],
         ),
     ]
 )
