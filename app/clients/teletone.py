@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Final, Optional, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
+from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError, FloodError
 from telethon.sync import TelegramClient
 from telethon.sessions import Session, StringSession
 
@@ -44,7 +44,7 @@ class TeletonClientManager:
         """Основной метод для получения клиента."""
         if self._client and self._client.is_connected():
             return self._client
-        await self._initialize_client()
+        await self.initialize_client()
         return self._client
 
     async def close(self):
@@ -96,8 +96,8 @@ class TeletonClientManager:
             logger.error('Ошибка сохранения сессии в БД', exc_info=True)
         return True
 
-    async def _initialize_client(self):
-        """Внутренняя логика инициализации клиента."""
+    async def initialize_client(self):
+        """Логика инициализации клиента."""
         # 1. Попытка загрузить существующую сессию
         session_string = await self._load_session()
         self._client = await self._create_client(session_string)
@@ -110,7 +110,14 @@ class TeletonClientManager:
         try:
             await self._client.start(phone=self.phone, password=self.password or None)
         except PhoneCodeInvalidError as e:
-            logger.error('Неверно введён telegram код, авторизация не выполнена')
+            logger.error(f'Неверно введён telegram код, авторизация не выполнена {e}')
+            raise e
+        except FloodError as e:
+            logger.error(f'Слишком большое количество попыток авторизации {e}')
+            raise e
+        except Exception as e:
+            logger.error(f'Неизвестная ошибка авторизации {e}')
+            raise e
         else:
             await self._save_session() # Сохраняем новую сессию
-            logger.info("Клиент Telegram успешно инициализирован и авторизован.")
+        logger.info("Клиент Telegram успешно инициализирован и авторизован.")
