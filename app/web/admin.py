@@ -11,7 +11,7 @@ from config import settings
 def setup_admin_panel(app):
     authentication_backend = AdminAuth(secret_key=settings.FAST_API_SECRET_KEY)
     admin = Admin(
-        app=app,  # Will be set in main.py
+        app=app,
         engine=engine,
         authentication_backend=authentication_backend,
         title=settings.PROJECT_NAME,
