@@ -1,6 +1,7 @@
 from sqladmin import ModelView
 
 from database import User, Post, Category, Tag, TelegramSession
+from database.users.roles import UserRole
 from sqlalchemy import inspect
 from sqlalchemy.orm import declared_attr
 
@@ -49,6 +50,7 @@ class UserAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, Mod
     }
     column_formatters = {
         "is_active": lambda model, attr: "✅ Состоит в ТГ группе" if model.is_active else "❌ Вышел из ТГ группы",
+        "role": lambda model, attr: UserRole.get_role_name(model.role),
     }
     form_groups = {
         "main_info": {
@@ -64,17 +66,10 @@ class UserAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, Mod
             "label": "Системная информация"
         }
     }
-
-    # form_widget_args = {
-    #     "password": {
-    #         "type": "password"
-    #     }
-    # }
     async def on_model_change(self, data, model, is_created, request) -> None:
-        if is_created:
-            plain_password = data["hashed_password"]
-            data["hashed_password"] = model.get_password_hash(plain_password)
-        # Вызываем родительский метод для сохранения
+        if "password" in data:
+            plain_password = data["password"]
+            data["password"] = model.get_password_hash(plain_password)
         await super().on_model_change(data, model, is_created, request)
 
 class CategoryAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, ModelView, model=Category):
