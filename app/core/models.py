@@ -16,8 +16,17 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.now(timezone.utc),
+        comment='Дата создания'
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+        comment='Дата обновления'
+    )
 
     @classmethod
     async def one_or_none(cls, session: AsyncSession, **kwargs) -> t.Optional[T]:
