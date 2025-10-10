@@ -34,13 +34,20 @@ TG_PHONE: Final[str] = os.getenv("TG_PHONE")
 TG_PASSWORD : Final[str] = os.getenv("TG_PASSWORD")
 TELETONE_SESSION_NAME: Final[str] = 'tg_session_teletone'
 PARSE_MODE: Final[str] = 'html'
-TG_SESSION_RECREATE_TIMEOUT: Final[int] = 3 # Время для перезапуска сессии в случае обрыва секунды
+# Время для перезапуска сессии в случае обрыва секунды
+TG_SESSION_RECREATE_TIMEOUT: Final[int] = 3
 
 #ADMIN PANEL
 DOMAIN_NAME: Final[str] = os.getenv("DOMAIN_NAME")
-PROJECT_NAME: Final[str] = 'Кото-Вет помощник' # Используется для имени web админки интерфейса
+# Используется для имени web админки интерфейса
+PROJECT_NAME: Final[str] = 'Кото-Вет помощник'
+# Контекст для шифрования ключей авторизации в админ панели
 PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 FAST_API_SECRET_KEY: Final[str] = os.getenv("FAST_API_SECRET_KEY")
+# Количество проваленных попыток авторизации пользователя, перед временной блокировкой
+MAX_FAILED_ATTEMPTS: Final[int] = 5
+# Время в секундах - насколько пользователю заблокирован доступ после MAX_FAILED_ATTEMPTS попыток
+USER_BLOCK_TIMEOUT: Final[int] = 500
 ## JWT
 COMPANY_NAME="Кото-ВетПросвет"
 JWT_SECRET = os.getenv("JWT_SECRET")
