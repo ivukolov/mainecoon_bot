@@ -13,7 +13,7 @@ from core.models import BaseModel
 from database.db import engine, get_db_session_directly
 from web.admin import setup_admin_panel
 from web.routes import router
-from web.midleware import DatabaseMiddleware
+from web.midleware import DatabaseMiddleware,  RedisMiddleware
 
 logger = getLogger(__name__)
 
@@ -34,6 +34,7 @@ app = FastAPI(
         Middleware(
             DatabaseMiddleware
         ),
+        Middleware(RedisMiddleware),
         Middleware(
             CORSMiddleware, allow_origins=[
                 "http://localhost",
