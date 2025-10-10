@@ -60,9 +60,11 @@ class User(BaseModel):
         }
     )
     username: Mapped[str] = mapped_column(
-        sa.String(settings.USERNAME_LENGTH), nullable=False, unique=True
+        sa.String(settings.USERNAME_LENGTH), nullable=False, unique=True, comment="Логин пользователя"
     )
-    password: Mapped[str] = mapped_column(sa.String(settings.USER_PASSWORD_HASH_LENGTH), nullable=True, unique=False)
+    password: Mapped[str] = mapped_column(
+        sa.String(settings.USER_PASSWORD_HASH_LENGTH), nullable=True, unique=False, comment="Пароль"
+    )
     first_name: Mapped[t.Optional[str]] = mapped_column(
         sa.String(settings.USER_FIRST_NAME_LENGTH), nullable=True, unique=False
     )
