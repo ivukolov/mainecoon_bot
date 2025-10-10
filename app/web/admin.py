@@ -5,7 +5,7 @@ from starlette.responses import JSONResponse, RedirectResponse, Response
 from database.db import engine
 from database.users.models import User
 from web.authentication import AdminAuth
-from web.views import UserAdmin, TagAdmin, CategoryAdmin, PostAdmin
+from web.views import UserAdmin, TagAdmin, CategoryAdmin, PostAdmin, TelegramSessionAdmin
 
 from config import settings
 
@@ -43,4 +43,5 @@ def setup_admin_panel(app):
     admin.add_view(TagAdmin)
     admin.add_view(CategoryAdmin)
     admin.add_view(PostAdmin)
+    admin.add_view(TelegramSessionAdmin)
     return admin
