@@ -7,6 +7,12 @@ class RedisCache:
         self.client = redis_client
         self.default_ttl = default_ttl
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self.client.__aexit__(exc_type, exc_val, exc_tb)
+
     async def set(self, key, value, ttl=None):
         """Кэширование строки"""
         ttl = ttl or self.default_ttl
