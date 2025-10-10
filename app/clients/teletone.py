@@ -73,7 +73,8 @@ class TeletonClientManager:
                 tg_session: TelegramSession = await TelegramSession.one_or_none(name=settings.TELETONE_SESSION_NAME, session=db)
                 return tg_session.hash
         except Exception as e:
-            return None
+            logger.error(f'Ошибка загрузки сессии из базы данных {e}')
+            raise e
 
     async def _save_session(self) -> bool:
         """Метод сохранения сесии"""
