@@ -37,6 +37,7 @@ PARSE_MODE: Final[str] = 'html'
 TG_SESSION_RECREATE_TIMEOUT: Final[int] = 3 # Время для перезапуска сессии в случае обрыва секунды
 
 #ADMIN PANEL
+DOMAIN_NAME: Final[str] = os.getenv("DOMAIN_NAME")
 PROJECT_NAME: Final[str] = 'Кото-Вет помощник' # Используется для имени web админки интерфейса
 PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 FAST_API_SECRET_KEY: Final[str] = os.getenv("FAST_API_SECRET_KEY")
