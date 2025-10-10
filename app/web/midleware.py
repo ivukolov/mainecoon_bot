@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from database.db import AsyncSessionLocal
+from utils.cache import RedisCache
 
 
 class DatabaseMiddleware(BaseHTTPMiddleware):
@@ -17,5 +18,16 @@ class DatabaseMiddleware(BaseHTTPMiddleware):
             except Exception as e:
                 # Откатываем изменения при ошибке
                 await session.rollback()
+                raise e
+        return response
+
+class RedisMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        async with RedisCache() as cash:
+            request.state.cash = cash
+            try:
+                # Передаем запрос дальше
+                response = await call_next(request)
+            except Exception as e:
                 raise e
         return response
