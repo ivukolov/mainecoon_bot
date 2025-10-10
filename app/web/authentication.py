@@ -27,7 +27,7 @@ class AdminAuth(AuthenticationBackend):
         if user and user.authenticate_user(password):
             access_token = self.generate_jwt_token(str(user.id))
             request.session.update({"token": access_token})
-            return True
+            return True , context["error"]
         logger.warning(f"Неудачная попытка войти в админ панель - пользователь: {username} ")
         return False, context
 
