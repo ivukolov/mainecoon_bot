@@ -26,19 +26,21 @@ async def cmd_start(message: Message, tg_user: User, command: CommandObject, db:
     username = tg_user.username if tg_user else message.from_user.username
     referral = command.args
     if referral:
-        result, msg_txt = check_referral(user_id=tg_user.id, referral=referral)
-        if result:
+        try:
+            referral = check_referral(user_id=tg_user.id, referral=referral)
+        except Exception as e:
+            logger.error(e)
             return await message.answer(
-                msg_txt,
+                f"❌ {e}",
+                reply_markup=main_menu_kb()
+            )
+        else:
+            return await message.answer(
+                "✅ Вступите в группу и нажмите на кнопку:",
                 reply_markup=referral_check_kb(
                     user_id=tg_user.id, referral=referral
                )
             )
-
-        return await message.answer(
-            msg_txt,
-            reply_markup=main_menu_kb()
-        )
     if tg_user and tg_user.is_admin:
         return await message.answer("Привет Босс !", reply_markup=admin_mine_menu_kb())
     return await message.answer(
