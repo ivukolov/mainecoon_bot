@@ -48,10 +48,10 @@ class UserAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, Mod
     field_labels = {
         "username": "Имя пользователя"
     }
-    column_formatters = {
-        "is_active": lambda model, attr: "✅ Состоит в ТГ группе" if model.is_active else "❌ Вышел из ТГ группы",
-        "role": lambda model, attr: UserRole.get_role_name(model.role),
-    }
+    # column_formatters = {
+    #     "is_active": lambda model, attr: "✅ Да" if model.is_active else "❌ Нет",
+    #     "role": lambda model, attr: UserRole.get_role_name(model.role),
+    # }
     form_groups = {
         "main_info": {
             "fields": ["username", "name", "is_active"],
@@ -122,8 +122,8 @@ class PostAdmin(ColumnLabelsGeneratorMixin, ReadOnlyMixin, ModelView, model=Post
         "step": 1                 # Шаг изменения
     },
     "forwards": {
-        "type": "number",         # Числовое поле
-        "min": 0,                 # Минимальное значение
-        "step": 1                 # Шаг изменения
+        "type": "number",
+        "min": 0,
+        "step": 1
     },
     }
