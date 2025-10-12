@@ -42,7 +42,8 @@ async def main():
         await bot_send_message(f'Не удалось инициализировать клиент Teletone {e}')
         logger.error(
             "Не удалась инициализация клиента Teletone - "
-            "продолжаем загрузку без него. Парсинг временно недоступен! "
+            "продолжаем загрузку без него. Парсинг временно недоступен!",
+            exc_info=True,
         )
     dp.update.middleware(TeletonClientMiddleware(tt_client_manager))
     dp.update.middleware(DatabaseMiddleware(session_factory))
