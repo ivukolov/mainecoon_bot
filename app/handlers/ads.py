@@ -44,10 +44,11 @@ async def ads_handle_referral_invite(
 @ads_router.message(F.text == MainMenu.ADS.value.name)
 async def ads_menu(message: Message, db: AsyncSession, tg_user: User):
     """Обработка кнопки меню"""
+    users_count = await tg_user.get_invited_users_cnt(session=db)
     await message.answer(
         f"Для размещения рекламы вам нужно задонатить "
         f"{settings.DONATION_AMOUNT} руб. или пригласить {settings.USERS_CNT} "
-        f"подписчиков",
+        f"подписчиков. Текущее кол-во подписчиков: {users_count}",
         reply_markup=ads.ads_publisher_kb()
         )
 
