@@ -71,16 +71,7 @@ async def get_confirm_code():
                   data = {'code': [code], 'last_update_id': last_update_id}
                   await cash.set_json(redis_key, data)
                   await bot_send_message('Код принят, обрабатываем!')
-                  print(code)
                   return code
-                  # if cached_keys and code in cached_keys['code']:
-                  #    continue
-                  # data = {'code': [code], 'last_update_id': last_update_id}
-                  # if cached_keys:
-                  #    data['code'] + cached_keys.get('code', [])
-                  # await cash.set_json(redis_key, data)
-
-
       except Exception as e:
          logger.error(f"Error: {e}")
          await asyncio.sleep(5)
@@ -110,14 +101,14 @@ def get_referral(user_id: int, bot_name: str) -> str:
    return  f"https://t.me/{bot_name}?start={user_id}"
 
 
-def check_referral(user_id: int, referral: str)  -> t.Tuple[bool, str]:
+def check_referral(user_id: int, referral: str)  -> int:
    try:
       referral = int(referral)
    except ValueError:
-      return False, '❌ Некорректное реферальное значение',
+     raise ValueError('Некорректное реферальное значение')
    if user_id == referral:
-      return False, "❌ Нельзя пригласить самого себя"
-   return True, '✅ Вступите в группу и нажмите на кнопку:'
+      raise ValueError('❌ Нельзя пригласить самого себя')
+   return referral
 
 
 async def get_invite_link(bot: Bot) -> ChatInviteLink:
