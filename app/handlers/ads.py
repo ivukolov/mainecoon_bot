@@ -20,7 +20,7 @@ ads_router = Router()
 async def ads_handle_referral_invite(callback_query: CallbackQuery, callback_data: ads.ReferralCheck, db: AsyncSession, tg_user: User):
     """Функция обработки реферальной ссылки"""
     bot = callback_query.message.bot
-    if tg_user.id == callback_data.user_id:
+    if tg_user.id == callback_data.referral:
         return await callback_query.message.answer('Нельзя пригласить самого себя')
     group_login = await get_group_login(bot)
     is_subscribe = await check_user_subscribe(bot=bot, user_id=tg_user.id)
