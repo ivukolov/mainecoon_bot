@@ -124,21 +124,16 @@ class User(BaseModel):
         """Определяет, требуется ли пароль для текущей роли. (на случай добавления модераторов)"""
         return self.role in [UserRole.ADMIN,]
 
+    # @property
+    # def invited_users_count(self) -> int:
+    #     """Для админ панели"""
+    #     return sum(1 for user in self.inviting_users if user.is_active)
+
     @property
     def invited_users_count(self) -> int:
-        """Гибридное свойство для подсчета активных приглашенных"""
-        if not self.invited_user:
-            return 0
+        """Количество активных приглашённых (Python)"""
         return sum(1 for user in self.inviting_users if user.is_active)
 
-    # @active_invited_users_count.expression
-    # def active_invited_users_count(cls):
-    #     """SQL выражение для гибридного свойства"""
-    #
-    #     return (
-    #         sa.select(sa.func.count(user_invites.c.user_invited))
-    #         .label("active_invited_count")
-    #     ).scalar_subquery()
 
 
     @validates('password', 'role')
@@ -161,6 +156,7 @@ class User(BaseModel):
 
     def __str__(self) -> str:
         return f'<Пользователь: @{self.username} "{self.first_name} {self.last_name}">'
+
 
     @classmethod
     async def on_conflict_do_update_users(cls, session, users_dict_list):
@@ -214,6 +210,15 @@ class User(BaseModel):
             return self.verify_password(password)
         return False
 
+    async def get_invited_users_cnt(self, session: AsyncSession) -> int:
+        stmt = (
+            sa.select(sa.func.count(self.id))
+            .select_from(user_invites)
+            .join(User, User.id == user_invites.c.user_invited)
+            .where(user_invites.c.user_inviting == self.id)
+        )
+        result = await session.execute(stmt)
+        return result.scalar() or 0
 
 
     async def add_invited_user(self, session, inviting_user: 'User') -> None:
