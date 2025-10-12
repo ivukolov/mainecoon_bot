@@ -17,8 +17,10 @@ logger.info(f'Инициализируем роутер {__name__}')
 ads_router = Router()
 
 @ads_router.callback_query(ads.ReferralCheck.filter())
-async def ads_handle_referral_invite(callback_query: CallbackQuery, callback_data: ads.ReferralCheck, db: AsyncSession, tg_user: User):
-    """Функция обработки реферальной ссылки"""
+async def ads_handle_referral_invite(
+        callback_query: CallbackQuery, callback_data: ads.ReferralCheck, db: AsyncSession, tg_user: User
+):
+    """Обработка реферальной ссылки"""
     bot = callback_query.message.bot
     if tg_user.id == callback_data.referral:
         return await callback_query.message.answer('Нельзя пригласить самого себя')
@@ -30,13 +32,18 @@ async def ads_handle_referral_invite(callback_query: CallbackQuery, callback_dat
         except sa.exc.IntegrityError:
             return await callback_query.message.answer('Нельзя принять инвайт дважды')
         except Exception:
-            return await callback_query.message.answer('Произошла неизвестная ошибка, обратитесь к администратору канала')
-        return await callback_query.message.answer(f"Добро пожаловать в наше сообщество! {group_login}")
+            return await callback_query.message.answer(
+                'Произошла неизвестная ошибка, обратитесь к администратору канала'
+            )
+        return await callback_query.message.answer(
+            f"Реферальная ссылка обработана. Добро пожаловать в наше сообщество! {group_login}"
+        )
     return await callback_query.message.answer(f"Вы не подписаны на группу {group_login}")
 
 
 @ads_router.message(F.text == MainMenu.ADS.value.name)
 async def ads_menu(message: Message, db: AsyncSession, tg_user: User):
+    """Обработка кнопки меню"""
     await message.answer(
         f"Для размещения рекламы вам нужно задонатить "
         f"{settings.DONATION_AMOUNT} руб. или пригласить {settings.USERS_CNT} "
@@ -46,6 +53,7 @@ async def ads_menu(message: Message, db: AsyncSession, tg_user: User):
 
 @ads_router.callback_query(F.data == ads.AdsMenu.GET_REFERRAL.value.callback)
 async def ads_referral_btn(callback_query: CallbackQuery, db: AsyncSession, tg_user: User):
+    """Генерация реферальной ссылки"""
     bot = callback_query.message.bot
     bot_about = await bot.get_me()
     referral = get_referral(user_id=tg_user.id, bot_name=bot_about.username)
@@ -53,4 +61,5 @@ async def ads_referral_btn(callback_query: CallbackQuery, db: AsyncSession, tg_u
 
 @ads_router.callback_query(F.data == ads.AdsMenu.DONATE.value.callback)
 async def ads_donate_btn(callback_query: CallbackQuery, db: AsyncSession, tg_user: User):
+    """Донат"""
     await callback_query.message.answer(f"Спасибо что решили нас поддержать! ")
