@@ -5,10 +5,10 @@ from keyboards.lexicon import ActionButtons, AdsMenu
 
 class ReferralCheck(CallbackData, prefix="referral_check"):
     user_id: int
-    referral: str
+    referral: int
 
 
-def referral_check_kb(user_id: int, referral: str) -> InlineKeyboardMarkup:
+def referral_check_kb(user_id: int, referral: int) -> InlineKeyboardMarkup:
     """Кнопки для работы с реферальной ссылкой"""
     buttons = [
         [
