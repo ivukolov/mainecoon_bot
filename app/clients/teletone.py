@@ -71,7 +71,7 @@ class TeletonClientManager:
         try:
             async with db_session as db:
                 tg_session: TelegramSession = await TelegramSession.one_or_none(name=settings.TELETONE_SESSION_NAME, session=db)
-                return tg_session.hash
+                return tg_session.hash if tg_session else None
         except Exception as e:
             logger.error(f'Ошибка загрузки сессии из базы данных {e}')
             raise e
