@@ -12,6 +12,8 @@ load_dotenv(override=True)
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
 ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
 ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent
+# Используется для имени web админки интерфейса
+PROJECT_NAME: Final[str] = 'Кото-Вет помощник'
 
 # Telegram.
 ## ПАРАМЕТРЫ АДМИНИСТРАТОРА КАНАЛА
@@ -28,8 +30,13 @@ BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, полу
 CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID")
 
 # Teletone
+# Высвечивается в информации о сессии в tg клиенте
+SYSTEM_VERSION = 'Windows11'
+DEVICE_MODEL = 'Asus'
+# из my.telegram.org
 TG_API_ID: Final[str] = os.getenv("TG_API_ID")
 TG_API_HASH: Final[str] = os.getenv("TG_API_HASH")
+#
 TG_PHONE: Final[str] = os.getenv("TG_PHONE")
 TG_PASSWORD : Final[str] = os.getenv("TG_PASSWORD")
 TELETONE_SESSION_NAME: Final[str] = 'tg_session_teletone'
@@ -39,8 +46,6 @@ TG_SESSION_RECREATE_TIMEOUT: Final[int] = 3
 
 #ADMIN PANEL
 DOMAIN_NAME: Final[str] = os.getenv("DOMAIN_NAME")
-# Используется для имени web админки интерфейса
-PROJECT_NAME: Final[str] = 'Кото-Вет помощник'
 # Контекст для шифрования ключей авторизации в админ панели
 PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 FAST_API_SECRET_KEY: Final[str] = os.getenv("FAST_API_SECRET_KEY")
