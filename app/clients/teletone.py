@@ -59,8 +59,8 @@ class TeletonClientManager:
                 session=StringSession(session_string),
                 api_id=self.api_id,
                 api_hash=self.api_hash,
-                system_version='Windows11',
-                device_model='Asus',
+                system_version=settings.SYSTEM_VERSION,
+                device_model=settings.DEVICE_MODEL,
                 app_version=TelegramClient.__version__,
             )
         return self.client
