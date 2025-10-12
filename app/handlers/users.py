@@ -22,6 +22,7 @@ users_router = Router()
 )
 async def bot_added_as_member(event: ChatMemberUpdated, tg_user: User, db: AsyncSession):
     """Обработка вступления новых пользователей"""
+    # Добавить обработку мапером с генерацией username
     user = event.new_chat_member.user
     tg_user.is_active = True
     logger.info(f"В группу вступил новый пользователь: {user.full_name} (@{user.username})")
