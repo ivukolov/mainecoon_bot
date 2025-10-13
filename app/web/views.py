@@ -1,15 +1,18 @@
 from sqladmin import ModelView
 
-from database import User, Post, Category, Tag, TelegramSession
+from database import User, Post, Category, Tag, TelegramSession, Ad, AdType, CatAd, Photo
 from database.users.roles import UserRole
 from sqlalchemy import inspect
 from sqlalchemy.orm import declared_attr
 
+
 class ReadOnlyMixin:
     form_readonly_columns = ["created_at", "updated_at"]
 
+
 class PostExcludeMixin:
     form_excluded_columns = ['posts', "created_at", "updated_at"]
+
 
 class ColumnLabelsGeneratorMixin:
     @property
@@ -66,11 +69,13 @@ class UserAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, Mod
             "label": "Системная информация"
         }
     }
+
     async def on_model_change(self, data, model, is_created, request) -> None:
         if "password" in data:
             plain_password = data["password"]
             data["password"] = model.get_password_hash(plain_password)
         await super().on_model_change(data, model, is_created, request)
+
 
 class CategoryAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, ModelView, model=Category):
     name = "Категория"
@@ -85,6 +90,7 @@ class TagAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, Mode
     column_list = ['id', 'name']
     can_export = True
 
+
 class TelegramSessionAdmin(ColumnLabelsGeneratorMixin, ReadOnlyMixin, ModelView, model=TelegramSession):
     name = "Сессия"
     name_plural = "Сессии"
@@ -92,38 +98,56 @@ class TelegramSessionAdmin(ColumnLabelsGeneratorMixin, ReadOnlyMixin, ModelView,
     can_export = True
 
     form_widget_args = {
-    "hash": {
-        "type": "textarea",
-        "rows": 10,
-        "cols": 80
+        "hash": {
+            "type": "textarea",
+            "rows": 10,
+            "cols": 80
         },
     }
-
 
 
 class PostAdmin(ColumnLabelsGeneratorMixin, ReadOnlyMixin, ModelView, model=Post):
     name = "Пост"
     name_plural = "Посты"
-    column_list = ['id', 'views', 'forwards' ,'title', 'date']
+    column_list = ['id', 'views', 'forwards', 'title', 'date']
     can_export = True
     column_sortable_list = ["id", "date", 'views', 'forwards']
     column_default_sort = [('id', True), ('views', True), ('forwards', True)]
     column_searchable_list = ["id", "title"]
 
     form_widget_args = {
-    "message": {
-        "type": "textarea",
-        "rows": 10,
-        "cols": 80
+        "message": {
+            "type": "textarea",
+            "rows": 10,
+            "cols": 80
         },
-    "views": {
-        "type": "number",         # Числовое поле
-        "min": 0,                 # Минимальное значение
-        "step": 1                 # Шаг изменения
-    },
-    "forwards": {
-        "type": "number",
-        "min": 0,
-        "step": 1
-    },
+        "views": {
+            "type": "number",  # Числовое поле
+            "min": 0,  # Минимальное значение
+            "step": 1  # Шаг изменения
+        },
+        "forwards": {
+            "type": "number",
+            "min": 0,
+            "step": 1
+        },
     }
+
+
+class AdAdmin(ColumnLabelsGeneratorMixin, ModelView, model=Ad):
+    name = "Реклама"
+    name_plural = "Реклама"
+
+
+class AdTypeAdmin(ColumnLabelsGeneratorMixin, ModelView, model=AdType):
+    name = "Тип рекламного сообщения"
+    name_plural = "Типы рекламных сообщений"
+
+class CatAdAdmin(ColumnLabelsGeneratorMixin, ModelView, model=CatAd):
+    name = "Рекламный пост продажи кота"
+    name_plural = "Рекламные посты продажи котов"
+
+class PhotoAdmin(ColumnLabelsGeneratorMixin, ModelView, model=Photo):
+    name = "Фотография"
+    name_plural = "Фотографии"
+

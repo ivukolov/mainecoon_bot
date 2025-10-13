@@ -7,7 +7,6 @@ import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
 from core.models import BaseModel
-from database.users.models import User
 from config import settings
 
 # class PostTag(BaseModel):
@@ -116,7 +115,7 @@ class Post(BaseModel):
     # media: Mapped[str] = mapped_column(Text, nullable=True, comment='Фото из поста')
 
     # Один к одному.
-    author: orm.Mapped[User] = orm.relationship("User", back_populates="posts")
+    author: orm.Mapped['User'] = orm.relationship("User", back_populates="posts")
     category: orm.Mapped[Category] = orm.relationship("Category", back_populates="posts")
     tags: orm.Mapped[t.List["Tag"]] = orm.relationship(
         "Tag",
@@ -178,7 +177,7 @@ class CatAd(BaseModel):
     photo_id: orm.Mapped[int] = orm.mapped_column(
         sa.Integer, sa.ForeignKey('photos.id'), nullable=False
     )
-    photo: orm.Mapped[t.List[Photo]] = orm.relationship('Photo', back_populates="cat_ads")
+    photo: orm.Mapped[t.List[Photo]] = orm.relationship('Photo')
 
 
 class AdType(BaseModel):
@@ -209,4 +208,4 @@ class Ad(BaseModel):
     is_moderated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Объявление прошло модерацию')
     author: orm.Mapped['User'] = orm.relationship("User", back_populates="ads")
     ad_type: orm.Mapped['AdType'] = orm.relationship('AdType', back_populates="ads")
-    cat_ad: orm.Mapped[t.Optional['CatAd']] = orm.relationship('CatAd', back_populates="ad", uselist=False)
+    cat_ads: orm.Mapped[t.Optional['CatAd']] = orm.relationship('CatAd', back_populates="ad", uselist=False)
