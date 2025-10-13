@@ -20,6 +20,7 @@ from exceptions import ads
 from core.models import BaseModel
 from config import settings
 from database.users.roles import UserRole
+from database.blog.models import Ad
 
 logger = getLogger(__name__)
 
@@ -55,8 +56,8 @@ class User(BaseModel):
         nullable=False,
         unique=True,
         info={
-        "verbose_name": "telegram id пользователя",
-        "help_text": "Уникальный tg id для рассылки и идентификации"
+            "verbose_name": "telegram id пользователя",
+            "help_text": "Уникальный tg id для рассылки и идентификации"
         }
     )
     username: Mapped[str] = mapped_column(
@@ -96,7 +97,7 @@ class User(BaseModel):
         nullable=False,
         default=UserRole.USER.value,
         server_default=UserRole.USER.value,
-        unique = False,
+        unique=False,
         comment='Роль пользователя'
     )
     email: Mapped[str] = mapped_column(sa.String(255), unique=True, nullable=True, comment='Электронная почта')
@@ -104,6 +105,7 @@ class User(BaseModel):
         sa.String(settings.USER_INFO_LENGTH), nullable=True, unique=False, comment='Доп информация'
     )
     is_active: Mapped[bool] = mapped_column(nullable=False, default=False, comment='Является подписчиком канала')
+    ads: Mapped[t.List['Ad']] = relationship('Ad', back_populates="author")
     posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
     invited_user = relationship(
         'User',
@@ -111,7 +113,7 @@ class User(BaseModel):
         primaryjoin=(id == user_invites.c.user_inviting),
         secondaryjoin=(id == user_invites.c.user_invited),
         backref='inviting_users',
-        lazy='selectin', # subquery
+        lazy='selectin',  # subquery
         uselist=False,  # Теперь это одиночный объект, а не список
     )
 
@@ -122,7 +124,7 @@ class User(BaseModel):
     @property
     def requires_password(self) -> bool:
         """Определяет, требуется ли пароль для текущей роли. (на случай добавления модераторов)"""
-        return self.role in [UserRole.ADMIN,]
+        return self.role in [UserRole.ADMIN, ]
 
     # @property
     # def invited_users_count(self) -> int:
@@ -133,8 +135,6 @@ class User(BaseModel):
     def invited_users_count(self) -> int:
         """Количество активных приглашённых (Python)"""
         return sum(1 for user in self.inviting_users if user.is_active)
-
-
 
     @validates('password', 'role')
     def validate_password_requirements(self, key, value):
@@ -153,10 +153,8 @@ class User(BaseModel):
                 )
         return value
 
-
     def __str__(self) -> str:
         return f'<Пользователь: @{self.username} "{self.first_name} {self.last_name}">'
-
 
     @classmethod
     async def on_conflict_do_update_users(cls, session, users_dict_list):
@@ -220,14 +218,12 @@ class User(BaseModel):
         result = await session.execute(stmt)
         return result.scalar() or 0
 
-
     async def add_invited_user(self, session, inviting_user: 'User') -> None:
         self.invited_user = inviting_user
         session.add(self.invited_user)
         await session.commit()
 
-
-    async def invite_user(self, referral: t.Union[str,int], session: AsyncSession) -> None:
+    async def invite_user(self, referral: t.Union[str, int], session: AsyncSession) -> None:
         inviting_user: User | None = await User.one_or_none(session=session, id=referral)
         if not inviting_user:
             raise ads.UserNotFoundError()
