@@ -1,5 +1,6 @@
-from datetime import datetime
-from enum import StrEnum
+from datetime import datetime, date
+from decimal import Decimal
+from enum import StrEnum, Enum
 import typing as t
 
 import sqlalchemy as sa
@@ -8,6 +9,7 @@ import sqlalchemy.orm as orm
 from core.models import BaseModel
 from database.users.models import User
 from config import settings
+
 # class PostTag(BaseModel):
 #     __tablename__ = 'post_tags'
 #
@@ -46,14 +48,13 @@ class Tag(BaseModel):
         lazy="selectin",
     )
 
-
     def __str__(self):
         return self.name
 
     @classmethod
-    async def get_tag(cls,session,  tag_name) -> t.List['Post',]:
+    async def get_tag(cls, session, tag_name) -> t.List['Post',]:
         query = sa.select(cls).filter(cls.name.like(f"%{tag_name}%"))
-        rsult =  await session.execute(query)
+        rsult = await session.execute(query)
         return rsult.scalars().first()
 
     @classmethod
@@ -77,7 +78,6 @@ class Tag(BaseModel):
         return existing_tags
 
 
-
 class Category(BaseModel):
     __tablename__ = "categories"
 
@@ -95,6 +95,7 @@ class Category(BaseModel):
     def __str__(self):
         return self.name
 
+
 class Post(BaseModel):
     __tablename__ = "posts"
 
@@ -102,11 +103,14 @@ class Post(BaseModel):
         sa.Integer, primary_key=True, nullable=False, comment='id поста из telegram', unique=True
     )
     date: orm.Mapped[datetime] = orm.mapped_column(sa.DateTime(timezone=True), comment='Дата создания поста.')
-    edit_date: orm.Mapped[datetime] = orm.mapped_column(sa.DateTime(timezone=True), nullable=True, comment='Дата Изменения поста.')
-    title: orm.Mapped[str] = orm.mapped_column(sa.String(settings.POST_TITLE_LENGTH), nullable=False, comment='Название поста.' )
+    edit_date: orm.Mapped[datetime] = orm.mapped_column(sa.DateTime(timezone=True), nullable=True,
+                                                        comment='Дата Изменения поста.')
+    title: orm.Mapped[str] = orm.mapped_column(sa.String(settings.POST_TITLE_LENGTH), nullable=False,
+                                               comment='Название поста.')
     message: orm.Mapped[str] = orm.mapped_column(sa.Text, nullable=False, comment='Сообщение из поста')
     author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey("users.id", comment='Автор поста'), nullable=True)
-    category_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey("categories.id"), comment='Категория поста', nullable=True)
+    category_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey("categories.id"), comment='Категория поста',
+                                                     nullable=True)
     views: orm.Mapped[int] = orm.mapped_column(sa.Integer, nullable=True, comment="Количество просмотров")
     forwards: orm.Mapped[int] = orm.mapped_column(sa.Integer, nullable=True, comment="Количество пересылок")
     # media: Mapped[str] = mapped_column(Text, nullable=True, comment='Фото из поста')
@@ -118,7 +122,7 @@ class Post(BaseModel):
         "Tag",
         secondary=post_tags,
         back_populates="posts",
-        lazy = "selectin",
+        lazy="selectin",
     )
 
     def __str__(self):
@@ -129,3 +133,80 @@ class Post(BaseModel):
         query = sa.select(cls).order_by(cls.date.desc()).limit(1)
         result = await session.execute(query)
         return result.scalar_one_or_none()
+
+class Genders(Enum):
+    """Роли пользователей"""
+    MALE = 'Мужской пол'
+    FEMALE = 'Женский пол'
+
+class Photo(BaseModel):
+    __tablename__ = "photos"
+
+    id: orm.Mapped[int] = orm.mapped_column(
+        sa.Integer, primary_key=True, nullable=False, unique=True
+    )
+    file_name: orm.Mapped[str] = orm.mapped_column(sa.String(255), nullable=False, comment='Название файла')
+    file_path: orm.Mapped[str] = orm.mapped_column(sa.String(255), nullable=False, comment='Путь сохранения файла')
+
+class CatAd(BaseModel):
+    """Объявление о продаже котика"""
+    __tablename__ = "cat_ads"
+    id: orm.Mapped[int] = orm.mapped_column(
+        sa.Integer, primary_key=True, nullable=False, unique=True
+    )
+    ad_id: orm.Mapped[int] = orm.mapped_column(
+        sa.Integer, sa.ForeignKey('ads.id'), nullable=False
+    )
+    ad: orm.Mapped['Ad'] = orm.relationship('Ad', back_populates="cat_ads")
+    gender: orm.Mapped[Genders] = orm.mapped_column(
+        sa.Enum(Genders),
+        nullable=False,
+        unique=False,
+        comment='Пол животного'
+    )
+    birthdate: orm.Mapped[date] = orm.mapped_column(sa.Date, comment='Дата рождения')
+    color: orm.Mapped[str] = orm.mapped_column(
+        sa.String(100), nullable=False, comment='Тип объявления'
+    )
+    cattery: orm.Mapped[str] = orm.mapped_column(
+        sa.String(100), nullable=True, comment='Питомник'
+    )
+    price: orm.Mapped[Decimal] = orm.mapped_column(sa.DECIMAL(precision=12, scale=2), nullable=False, comment='Цена')
+    contacts: orm.Mapped[str] = orm.mapped_column(
+        sa.String(100), nullable=False, comment='Контактная информация'
+    )
+    photo_id: orm.Mapped[int] = orm.mapped_column(
+        sa.Integer, sa.ForeignKey('photos.id'), nullable=False
+    )
+    photo: orm.Mapped[t.List[Photo]] = orm.relationship('Photo', back_populates="cat_ads")
+
+
+class AdType(BaseModel):
+    """Тип объявления"""
+    __tablename__ = "ads_type"
+    id: orm.Mapped[int] = orm.mapped_column(
+        sa.Integer, primary_key=True, nullable=False, unique=True
+    )
+    name: orm.Mapped[str] = orm.mapped_column(
+        sa.String(100), nullable=False, comment='Тип объявления'
+    )
+    description: orm.Mapped[t.Optional[str]] = orm.mapped_column(sa.Text, nullable=True)
+    ads: orm.Mapped[t.List['Ad']] = orm.relationship('Ad', back_populates="ad_type")
+
+
+class Ad(BaseModel):
+    """Рекламные объявления пользователей"""
+    __tablename__ = "ads"
+    id: orm.Mapped[int] = orm.mapped_column(
+        sa.Integer, primary_key=True, nullable=False, unique=True
+    )
+    author_id: orm.Mapped[int] = orm.mapped_column(
+        sa.Integer, sa.ForeignKey('users.id'), nullable=False
+    )
+    ad_type_id: orm.Mapped[int] = orm.mapped_column(
+        sa.Integer, sa.ForeignKey('ads_type.id'), nullable=False
+    )
+    is_moderated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Объявление прошло модерацию')
+    author: orm.Mapped['User'] = orm.relationship("User", back_populates="ads")
+    ad_type: orm.Mapped['AdType'] = orm.relationship('AdType', back_populates="ads")
+    cat_ad: orm.Mapped[t.Optional['CatAd']] = orm.relationship('CatAd', back_populates="ad", uselist=False)
