@@ -30,6 +30,13 @@ class InteractivesButton(CallbackButton):
     """Кнопки для админ меню"""
 
 
+class CatGenders(Enum):
+    MALE = Button(name='Мальчик')
+    FEMALE = Button(name='Девочка')
+
+    @classmethod
+    def get_values(cls) -> set[str]:
+        return {gender.value.name for gender in cls}
 
 
 class MainMenu(Enum):
@@ -45,17 +52,21 @@ class AdsMenu(Enum):
     GET_REFERRAL = AdsButton(name='Получить реферальную ссылку', callback='get_referral')
     DONATE = AdsButton(name='Оплатить', callback='donate')
 
+class AdsUserApprove(Enum):
+    TO_MODERATE = Button(name='✅ Отправить на модерацию')
+    REPEAT = Button(name='✏️ Заполнить заново')
 
-class ActionButtons(StrEnum):
-    CANCEL = "❌ Отмена"
-    BACK = "⬅️ Назад"
-    NEXT_PAGE = "Вперед ▶️"
-    PREV_PAGE = "◀️ Назад"
-    APPROVE = "✅ Одобрить"
-    REJECT = "❌ Отклонить"
-    BANE = "⛔ Забанить автора"
-    MAIN_MENU = "Главное Меню"
-    USER_JOIN = "Я вступил в группу"
+
+class ActionButtons(Enum):
+    CANCEL = Button(name="❌ Отмена" )
+    BACK = Button(name="⬅️ Назад")
+    NEXT_PAGE = Button(name="Вперед ▶️")
+    PREV_PAGE = Button(name="◀️ Назад")
+    APPROVE = Button(name="✅ Одобрить")
+    REJECT = Button(name="❌ Отклонить")
+    BANE = Button(name="⛔ Забанить автора")
+    MAIN_MENU = Button(name="Главное Меню")
+    USER_JOIN = Button(name="Я вступил в группу")
 
 
 
