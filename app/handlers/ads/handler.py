@@ -207,8 +207,9 @@ async def ads_process_photo(message: Message, state: FSMContext):
     await state.update_data(result_text=result_text)
 
 @ads_router.message(CatForm.approve)
-async def ads_approve_(message: Message, state: FSMContext):
+async def ads_approve_(message: Message, state: FSMContext, tg_user: User,):
     data = await state.get_data()
+    print(type(data['birth_date']))
     if message.text == AdsUserApprove.TO_MODERATE.value.name:
         await message.answer(
             'Рекламный пост отправлен но модерацию',
