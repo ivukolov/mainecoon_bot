@@ -26,7 +26,7 @@ class CatData(BaseData):
         None,
         max_length=settings.CAT_NAME_MAX_LENGTH
     )
-    price: str | None = Field(
+    price: float | str | None = Field(
         None,
         gt=0
     )
