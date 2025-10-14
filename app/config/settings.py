@@ -69,7 +69,7 @@ POSTGRES_PASSWORD: Final[str] = os.getenv("POSTGRES_PASSWORD")
 # "sqlite+aiosqlite:///./bot.db"
 DB_ENGINE =f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 # Models
-# User
+## User
 USERNAME_LENGTH: Final[int] = 100
 USER_INFO_LENGTH: Final[int] = 100
 USER_FIRST_NAME_LENGTH: Final[int] = 100
@@ -77,12 +77,20 @@ USER_LAST_NAME_LENGTH: Final[int] = 100
 USER_PASSWORD_HASH_LENGTH: Final[int] = 255
 LANG_CODE_LENGTH: Final[int] = 10
 PHONE_LENGTH: Final[int] = 25
-# Tag
+## Tag
 TAG_NAME_LENGTH: Final[int] = 30
 TAG_EMOJI_LENGTH: Final[int] = 14
-# Post
+## Post
 POST_TITLE_LENGTH: Final[int] = 100
-# ADS
+## ADS
+### Schema
+CAT_NAME_MAX_LENGTH: Final[int] = 50
+CAT_COLOR_MAX_LENGTH: Final[int] = 20
+CAT_CATTERY_MAX_LENGTH: Final[int] = 50
+CAT_CONTACTS_MIN_LENGTH: Final[int] = 5
+CAT_BIRTH_DATE_FORMAT: Final[str] = "%d.%m.%Y"
+CAT_BIRTH_DATE_INFO = 'ДД.ММ.ГГГГ:'
+
 DONATION_AMOUNT = 150 # Сумма доната в рублях для размещения рекламы
 USERS_CNT = 15 # Количество приглашенных людей для размещения рекламы
 
