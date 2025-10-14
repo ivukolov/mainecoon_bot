@@ -3,7 +3,7 @@ from handlers.main_menu import main_menu_router
 from handlers.admin import admin_router
 from handlers.blog import blog_router
 from handlers.partners import partners_router
-from handlers.ads import ads_router
+from handlers.ads.handler import ads_router
 from handlers.channel_posts import channel_listener
 from handlers.users import users_router
 from handlers.about import about_router
