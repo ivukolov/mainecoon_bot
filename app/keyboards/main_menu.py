@@ -34,7 +34,7 @@ def admin_mine_menu_kb() -> ReplyKeyboardMarkup:
 def cancel_kb() -> ReplyKeyboardMarkup:
     """Клавиатура для отмены действия"""
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=ActionButtons.CANCEL)]],
+        keyboard=[[KeyboardButton(text=ActionButtons.CANCEL.value.name)]],
         resize_keyboard=True,
         one_time_keyboard=True
     )
