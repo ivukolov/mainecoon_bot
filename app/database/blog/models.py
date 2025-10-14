@@ -134,13 +134,6 @@ class Post(BaseModel):
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
-
-class AnimalGender(Enum):
-    """Пол животного"""
-    MALE = 'male'
-    FEMALE = 'female'
-
-
 # class Photo(BaseModel):
 #     __tablename__ = "photos"
 #
@@ -188,12 +181,8 @@ class Photo(BaseModel):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     file_name: orm.Mapped[str] = orm.mapped_column(sa.String(255))
     file_path: orm.Mapped[str] = orm.mapped_column(sa.String(500))
-
-    # ✅ Связь с объявлением
     ad_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('ads.id'))
     ad: orm.Mapped['Ad'] = orm.relationship('Ad', back_populates='photos')
-
-    # Дополнительные поля
     sort_order: orm.Mapped[int] = orm.mapped_column(default=0)
     is_primary: orm.Mapped[bool] = orm.mapped_column(default=False)
 
@@ -215,7 +204,7 @@ class Ad(BaseModel):
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('users.id'))
-    ad_type_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('ad_types.id'))
+    ad_type_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('ads_type.id'))
     title: orm.Mapped[str] = orm.mapped_column(sa.String(200))
     attributes: orm.Mapped[dict] = orm.mapped_column(
         JSONB,
@@ -231,6 +220,7 @@ class Ad(BaseModel):
         order_by='Photo.sort_order'
     )
     ad_type: orm.Mapped['AdType'] = orm.relationship('AdType')
+    author: orm.Mapped['User'] = orm.relationship("User", back_populates="ads")
 
     __table_args__ = (
         sa.Index('ix_ads_attributes_gin', 'attributes', postgresql_using='gin'),

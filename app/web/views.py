@@ -1,6 +1,6 @@
 from sqladmin import ModelView
 
-from database import User, Post, Category, Tag, TelegramSession, Ad, AdType, CatAd, Photo
+from database import User, Post, Category, Tag, TelegramSession, Ad, AdType, Photo
 from database.users.roles import UserRole
 from sqlalchemy import inspect
 from sqlalchemy.orm import declared_attr
@@ -135,17 +135,14 @@ class PostAdmin(ColumnLabelsGeneratorMixin, ReadOnlyMixin, ModelView, model=Post
 
 
 class AdAdmin(ColumnLabelsGeneratorMixin, ModelView, model=Ad):
-    name = "Реклама"
-    name_plural = "Реклама"
+    name = "Рекламный пост"
+    name_plural = "Рекламные посты"
 
 
 class AdTypeAdmin(ColumnLabelsGeneratorMixin, ModelView, model=AdType):
     name = "Тип рекламного сообщения"
     name_plural = "Типы рекламных сообщений"
 
-class CatAdAdmin(ColumnLabelsGeneratorMixin, ModelView, model=CatAd):
-    name = "Рекламный пост продажи кота"
-    name_plural = "Рекламные посты продажи котов"
 
 class PhotoAdmin(ColumnLabelsGeneratorMixin, ModelView, model=Photo):
     name = "Фотография"
