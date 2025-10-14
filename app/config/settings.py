@@ -31,8 +31,8 @@ CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID")
 
 # Teletone
 # Высвечивается в информации о сессии в tg клиенте
-SYSTEM_VERSION = 'Windows11'
-DEVICE_MODEL = 'Asus'
+SYSTEM_VERSION = 'Teletone'
+DEVICE_MODEL = 'CatVetHalper'
 # из my.telegram.org
 TG_API_ID: Final[str] = os.getenv("TG_API_ID")
 TG_API_HASH: Final[str] = os.getenv("TG_API_HASH")
