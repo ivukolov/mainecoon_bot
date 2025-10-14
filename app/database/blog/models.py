@@ -157,6 +157,7 @@ class AdType(BaseModel):
     name: orm.Mapped[str] = orm.mapped_column(
         sa.String(100), nullable=False, comment='Тип объявления'
     )
+    slug: orm.Mapped[str] = orm.mapped_column(sa.String(50), unique=True)
     description: orm.Mapped[t.Optional[str]] = orm.mapped_column(sa.Text, nullable=True)
     ads: orm.Mapped[t.List['Ad']] = orm.relationship('Ad', back_populates="ad_type")
 
