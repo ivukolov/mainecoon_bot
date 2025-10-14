@@ -134,57 +134,19 @@ class Post(BaseModel):
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
-# class Photo(BaseModel):
-#     __tablename__ = "photos"
-#
-#     id: orm.Mapped[int] = orm.mapped_column(
-#         sa.Integer, primary_key=True, nullable=False, unique=True
-#     )
-#     file_name: orm.Mapped[str] = orm.mapped_column(sa.String(255), nullable=False, comment='Название файла')
-#     file_path: orm.Mapped[str] = orm.mapped_column(sa.String(255), nullable=False, comment='Путь сохранения файла')
-#     ad:
-
-# class CatAd(BaseModel):
-#     """Объявление о продаже котика"""
-#     __tablename__ = "cat_ads"
-#     id: orm.Mapped[int] = orm.mapped_column(
-#         sa.Integer, primary_key=True, nullable=False, unique=True
-#     )
-#     ad_id: orm.Mapped[int] = orm.mapped_column(
-#         sa.Integer, sa.ForeignKey('ads.id'), nullable=False
-#     )
-#     ad: orm.Mapped['Ad'] = orm.relationship('Ad', back_populates="cat_ads")
-#     gender: orm.Mapped[AnimalGender] = orm.mapped_column(
-#         sa.Enum(AnimalGender, name='gender_enum'),
-#         nullable=False,
-#         comment='Пол животного'
-#     )
-#     birthdate: orm.Mapped[date] = orm.mapped_column(sa.Date, comment='Дата рождения')
-#     color: orm.Mapped[str] = orm.mapped_column(
-#         sa.String(100), nullable=False, comment='Окрас животного'
-#     )
-#     cattery: orm.Mapped[str] = orm.mapped_column(
-#         sa.String(100), nullable=True, comment='Питомник'
-#     )
-#     price: orm.Mapped[Decimal] = orm.mapped_column(sa.DECIMAL(precision=12, scale=2), nullable=False, comment='Цена')
-#     contacts: orm.Mapped[str] = orm.mapped_column(
-#         sa.String(100), nullable=False, comment='Контактная информация'
-#     )
-#     photo_id: orm.Mapped[int] = orm.mapped_column(
-#         sa.Integer, sa.ForeignKey('photos.id'), nullable=False
-#     )
-#     photo: orm.Mapped[t.List[Photo]] = orm.relationship('Photo')
 
 class Photo(BaseModel):
     __tablename__ = "photos"
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    file_name: orm.Mapped[str] = orm.mapped_column(sa.String(255))
-    file_path: orm.Mapped[str] = orm.mapped_column(sa.String(500))
+    # file_name: orm.Mapped[str] = orm.mapped_column(sa.String(255))
+    # file_path: orm.Mapped[str] = orm.mapped_column(sa.String(500))
+    photo_id: orm.Mapped[int] = orm.mapped_column(default=0, comment='id фотографии в телегам')
     ad_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('ads.id'))
     ad: orm.Mapped['Ad'] = orm.relationship('Ad', back_populates='photos')
     sort_order: orm.Mapped[int] = orm.mapped_column(default=0)
     is_primary: orm.Mapped[bool] = orm.mapped_column(default=False)
+
 
 class AdType(BaseModel):
     """Тип объявления"""
@@ -205,19 +167,23 @@ class Ad(BaseModel):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('users.id'))
     ad_type_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('ads_type.id'))
-    title: orm.Mapped[str] = orm.mapped_column(sa.String(200))
+    title: orm.Mapped[str] = orm.mapped_column(sa.String(200), comment='Текст объявления')
+    bot_message_title: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=True, comment='Сообщения от бота')
+    is_publicated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Опубликовано в канале')
+    is_moderated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Одобрено модератором')
     attributes: orm.Mapped[dict] = orm.mapped_column(
         JSONB,
         nullable=False,
-        default=dict
+        default=dict,
+        comment='Текст объявления',
     )
-    price: orm.Mapped[Decimal] = orm.mapped_column(sa.Numeric(12, 2))
-    contacts: orm.Mapped[str] = orm.mapped_column(sa.String(200))
+    price: orm.Mapped[Decimal] = orm.mapped_column(sa.Numeric(12, 2), comment='Цена')
+    contacts: orm.Mapped[str] = orm.mapped_column(sa.String(200), comment='Контактные данные')
     photos: orm.Mapped[list['Photo']] = orm.relationship(
         'Photo',
         back_populates='ad',
         cascade='all, delete-orphan',  # автоматическое управление
-        order_by='Photo.sort_order'
+        order_by='Photo.sort_order',
     )
     ad_type: orm.Mapped['AdType'] = orm.relationship('AdType')
     author: orm.Mapped['User'] = orm.relationship("User", back_populates="ads")
