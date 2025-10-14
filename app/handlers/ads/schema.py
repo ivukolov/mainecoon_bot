@@ -5,7 +5,12 @@ import re
 
 from config import settings
 
-class CatData(BaseModel):
+class BaseData(BaseModel):
+    """"Базовая модель для всех типов рекламных акций"""
+
+
+
+class CatData(BaseData):
     name: str | None = Field(
         None,
         max_length=settings.CAT_COLOR_MAX_LENGTH
@@ -21,7 +26,7 @@ class CatData(BaseModel):
         None,
         max_length=settings.CAT_NAME_MAX_LENGTH
     )
-    price: float | str | None = Field(
+    price: str | None = Field(
         None,
         gt=0
     )
@@ -30,6 +35,7 @@ class CatData(BaseModel):
         min_length=settings.CAT_CONTACTS_MIN_LENGTH
     )
     photo_id: str | None = None
+    autor_id: int | None = None
 
 
     @field_validator('birth_date', mode='before')
