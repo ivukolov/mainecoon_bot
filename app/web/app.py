@@ -11,6 +11,8 @@ from utils.bot_utils import get_or_create_admin_user
 from config import settings
 from core.models import BaseModel
 from database.db import engine, get_db_session_directly
+from database.blog.models import AdType
+from database.blog.ads_types import CAT_ADS
 from web.admin import setup_admin_panel
 from web.routes import router
 from web.midleware import DatabaseMiddleware,  RedisMiddleware
@@ -22,6 +24,11 @@ logger = getLogger(__name__)
 async def lifespan(app: FastAPI):
     session = await get_db_session_directly()
     await get_or_create_admin_user(session)
+    await AdType.create_or_update(session, slug=CAT_ADS.slug, defaults={
+        'name': CAT_ADS.name,
+        'description': CAT_ADS.description,
+    })
+    await session.commit()
     yield
     session.close()
 
