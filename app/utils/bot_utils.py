@@ -47,7 +47,7 @@ async def get_updates(offset=None):
 async def get_confirm_code():
    cash = RedisCache()
    redis_key = f"{settings.ADMIN_ID}_teletone_code"
-   cached_keys = await cash.get_json(redis_key)
+   cached_keys = await cash.fetch_json(redis_key)
    last_update_id = cached_keys.get('last_update_id') if cached_keys else 1
    await bot_send_message('Введите telegram код')
    while True:
@@ -69,7 +69,7 @@ async def get_confirm_code():
                      await bot_send_message(f'Неизвестная ошибка {e}, попробуйте ещё раз')
                      continue
                   data = {'code': [code], 'last_update_id': last_update_id}
-                  await cash.set_json(redis_key, data)
+                  await cash.put_json(redis_key, data)
                   await bot_send_message('Код принят, обрабатываем!')
                   return code
       except Exception as e:
