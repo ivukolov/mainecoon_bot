@@ -140,7 +140,10 @@ class Photo(BaseModel):
         nullable=False,
         comment='Ссылка на объявление'
     )
-    cat_ad: orm.Mapped['CatAd'] = orm.relationship("CatAd", back_populates="photos")
+    cat_ad: orm.Mapped['CatAd'] = orm.relationship("CatAd", back_populates="photos", lazy='subquery')
+
+    def __str__(self):
+        return f"Фото: tg_foto_id: {self.photo_id}, user_id: {self.cat_ad_id}"
 
 
 class CatAd(BaseModel):
@@ -149,7 +152,7 @@ class CatAd(BaseModel):
     bot_message_title: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=True, comment='Сообщения от бота')
     is_publicated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Опубликовано в канале')
     is_moderated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Одобрено модератором')
-    author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('users.id'))
+    author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('users.id'), index=True, nullable=False,)
     name: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=False, comment='Имя')
     gender: orm.Mapped[CatGenders] = orm.mapped_column(
         sa.Enum(CatGenders),
@@ -169,4 +172,31 @@ class CatAd(BaseModel):
         back_populates="cat_ad",
         uselist=True,
     )
-    author: orm.Mapped['User'] = orm.relationship("User", back_populates="cat_ads")
+    author: orm.Mapped['User'] = orm.relationship("User", back_populates="cat_ads", lazy='subquery')
+
+    def __str__(self):
+        return f"AD: автор {self.author_id}, кот:{self.name}, цена: {self.price} прошло модерацию: {self.is_moderated}"
+
+    def __repr__(self):
+        return self.__str__()
+
+    @classmethod
+    async def get_ads(
+            cls,
+            session,
+            exclude_ids: t.Union[t.Optional[ t.Collection[int]]]=None,
+            is_moderated=False,
+            is_publicated=False
+    ) -> t.List['CatAd']:
+        exclude_ids = exclude_ids or []
+        query = sa.select(cls).where(
+            sa.and_(
+                sa.not_(cls.id.in_(exclude_ids)),
+                cls.is_moderated == is_moderated,
+                cls.is_publicated == is_publicated
+            )
+        ).options(
+            orm.selectinload(cls.author),orm.selectinload(cls.photos)
+        ).order_by(cls.created_at)
+        result = await session.execute(query)
+        return result.scalars().all()
