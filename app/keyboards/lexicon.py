@@ -31,12 +31,17 @@ class InteractivesButton(CallbackButton):
 
 
 class CatGenders(Enum):
-    MALE = Button(name='Мальчик')
-    FEMALE = Button(name='Девочка')
+    MALE = 'Мальчик'
+    FEMALE = 'Девочка'
 
     @classmethod
     def get_values(cls) -> set[str]:
-        return {gender.value.name for gender in cls}
+        return {gender.value for gender in cls}
+
+    @classmethod
+    def get_gender(self, gender_name: str) -> 'CatGenders':
+        genders_dict = {gender.value: gender for gender in self}
+        return genders_dict[gender_name]
 
 
 class MainMenu(Enum):
