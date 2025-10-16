@@ -8,9 +8,11 @@ from handlers.channel_posts import channel_listener
 from handlers.users import users_router
 from handlers.about import about_router
 from handlers.interactives import interactives_router
+from handlers.background import background_router
 
 
 routers = (
+    background_router,
     users_router,
     channel_listener,
     admin_router,
