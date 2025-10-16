@@ -35,8 +35,8 @@ def ads_cat_gender_kb() -> ReplyKeyboardMarkup:
         return ReplyKeyboardMarkup(
             keyboard=[
                 [
-                    KeyboardButton(text=CatGenders.MALE.value.name),
-                    KeyboardButton(text=CatGenders.FEMALE.value.name),
+                    KeyboardButton(text=CatGenders.MALE.value),
+                    KeyboardButton(text=CatGenders.FEMALE.value),
                     KeyboardButton(text=ActionButtons.CANCEL.value.name)
                 ]
             ],
