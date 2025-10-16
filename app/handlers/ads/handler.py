@@ -4,20 +4,19 @@ from typing import List
 import sqlalchemy as sa
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, InputMediaPhoto
+from aiogram.types import Message, CallbackQuery
 from aiogram_media_group import media_group_handler
-from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from keyboards.lexicon import MainMenu, CatGenders, AdsUserApprove
 from keyboards import main_menu
-from database import User, CatAd, Photo
+from database import User
 from services.ads import CatAdsService
 from utils.bot_utils import get_referral, check_user_subscribe, get_group_login
 from handlers.ads.states import CatForm
 from handlers.ads import keyboards as ads_kb
-from handlers.ads.schema import CatAdsSchema
+from schemas.ads import CatAdsSchema
 
 logger = getLogger(__name__)
 logger.info(f'Инициализируем роутер {__name__}')
@@ -180,23 +179,20 @@ async def ads_process_contacts(message: Message, state: FSMContext):
 
 @ads_router.message(CatForm.photo, F.media_group_id)
 @media_group_handler()
-async def ads_process_photo(messages: List[Message], state: FSMContext,  cat_ads_service: 'CatAdsService'):
+async def ads_process_photos(messages: List[Message], state: FSMContext,  cat_ads_service: CatAdsService):
     """Обработка медиа группы"""
-    return await messages[-1].answer('Нельзя отправлять несколько фотографий')
-    # return await messages[-1].reply_media_group(
-    #     [
-    #         InputMediaPhoto(
-    #             media=m.photo[-1].file_id,
-    #             caption=m.caption,
-    #             caption_entities=m.caption_entities,
-    #         )
-    #         for m in messages
-    #     ]
-    # )
-    #
+    photos = [m.photo[-1].file_id for m in messages]
+    await state.update_data(photos=photos)
+    data = await state.get_data()
+    media_message = cat_ads_service.get_media_message(ad_message=data)
+    await messages[-1].reply_media_group(media=media_message)
+    await messages[-1].answer(
+        'Внимательно всё проверьте перед отправкой!',reply_markup=ads_kb.ads_cat_send_to_moderate_kb()
+    )
+    return await state.set_state(CatForm.approve)
 
-@ads_router.message(CatForm.photo, F.photo, F.media_group_id == None)
-async def ads_process_photo(message: Message ,state: FSMContext,  cat_ads_service: CatAdsService):
+@ads_router.message(CatForm.photo, F.photo)
+async def ads_process_photo(message: Message, state: FSMContext,  cat_ads_service: CatAdsService):
     """Обработка фото"""
 
     photo_id = message.photo[-1].file_id
@@ -209,11 +205,13 @@ async def ads_process_photo(message: Message ,state: FSMContext,  cat_ads_servic
     await message.reply_media_group(
         media=media_message,
     )
-    await message.answer('Внимательно всё проверьте перед отправкой!',reply_markup=ads_kb.ads_cat_send_to_moderate_kb())
+    await message.answer(
+        'Внимательно всё проверьте перед отправкой!',reply_markup=ads_kb.ads_cat_send_to_moderate_kb()
+    )
     return await state.set_state(CatForm.approve)
 
 @ads_router.message(CatForm.approve)
-async def ads_approve(message: Message, state: FSMContext, tg_user: User, cat_ads_service: 'CatAdsService'):
+async def ads_approve(message: Message, state: FSMContext, tg_user: User, cat_ads_service: CatAdsService):
     data = await state.get_data()
     #await cat_ads_service.save_ad_message(data, author=tg_user)
     if message.text == AdsUserApprove.TO_MODERATE.value.name:
@@ -223,11 +221,6 @@ async def ads_approve(message: Message, state: FSMContext, tg_user: User, cat_ad
             reply_markup = main_menu.main_menu_kb()
         )
         await cat_ads_service.save_ad_message(data, author=tg_user)
-        # await message.answer_photo(
-        #     data['photo_id'],
-        #     caption=data['result_text'],
-        #
-        # )
     elif message.text == AdsUserApprove.REPEAT.value.name:
         await state.set_state(CatForm.name)
         await message.answer(
