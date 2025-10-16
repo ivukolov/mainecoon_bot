@@ -91,6 +91,9 @@ class User(BaseModel):
     is_premium: Mapped[t.Optional[bool]] = mapped_column(
         sa.Boolean, nullable=True, unique=False, comment='Премиум подписка'
     )
+    ads_publacated: Mapped[t.Optional[int]] = mapped_column(
+        sa.SMALLINT, default=0, unique=False, comment='Количество рекламных сообщений отправленных пользователем'
+    )
     role: Mapped[UserRole] = mapped_column(
         sa.Enum(UserRole),
         nullable=False,
