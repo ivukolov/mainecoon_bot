@@ -6,7 +6,7 @@ from database.db import engine
 from database.users.models import User
 from web.authentication import AdminAuth
 from web.views import (
-    UserAdmin, TagAdmin, CategoryAdmin, PostAdmin, TelegramSessionAdmin, AdAdmin, AdTypeAdmin, PhotoAdmin
+    UserAdmin, TagAdmin, CategoryAdmin, PostAdmin, TelegramSessionAdmin, CatAdAdmin, PhotoAdmin
 )
 
 from config import settings
@@ -46,7 +46,6 @@ def setup_admin_panel(app):
     admin.add_view(CategoryAdmin)
     admin.add_view(PostAdmin)
     admin.add_view(TelegramSessionAdmin)
-    admin.add_view(AdAdmin)
-    admin.add_view(AdTypeAdmin)
+    admin.add_view(CatAdAdmin)
     admin.add_view(PhotoAdmin)
     return admin
