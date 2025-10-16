@@ -1,17 +1,13 @@
 import typing as t
-from functools import cached_property
 from logging import getLogger
 
-from aiogram.types import InputMediaPhoto, Message
+from aiogram.types import InputMediaPhoto
 from sqlalchemy.ext.asyncio import AsyncSession
-import sqlalchemy.orm as orm
 import sqlalchemy as sa
 
-from config import settings
 from database import User
 from database.blog.models import CatAd, Photo
-from utils.decorators import classproperty
-from handlers.ads.schema import CatAdsSchema
+from schemas.ads import CatAdsSchema
 
 logger = getLogger(__name__)
 
