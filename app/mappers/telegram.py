@@ -6,10 +6,9 @@ import aiogram.types as aio_types
 from aiogram.enums.content_type import ContentType as aio_content_type
 from pydantic import ValidationError
 
-from mappers import schemas
-
 from database.users.roles import UserRole
-from mappers.schemas import TelegramUsersListDTO
+from schemas import dto
+from schemas.dto import TelegramUsersListDTO
 
 logger = getLogger(__name__)
 
@@ -17,10 +16,10 @@ class TelegramMessageMapper:
     """Маппер для конвертации telethon.Message в DTO."""
 
     @staticmethod
-    def __from_aiogram_message(message: aio_types.Message) -> t.Optional[schemas.TelegramMessageDTO]:
+    def __from_aiogram_message(message: aio_types.Message) -> t.Optional[dto.TelegramMessageDTO]:
         message_type = TelegramMessageMapper._get_aiogram_message_type(message)
 
-        return schemas.TelegramMessageDTO(
+        return dto.TelegramMessageDTO(
             id=message.message_id,
             text=message.text or message.caption,
             date=message.date,
@@ -33,20 +32,20 @@ class TelegramMessageMapper:
 
 
     @staticmethod
-    def __from_telethon_message(message: tt_types.Message) -> t.Optional[schemas.TelegramMessageDTO]:
+    def __from_telethon_message(message: tt_types.Message) -> t.Optional[dto.TelegramMessageDTO]:
         """Конвертирует telethon.Message в DTO."""
 
         # Определяем тип сообщения
         message_type = TelegramMessageMapper._get_teletone_message_type(message)
 
         # Собираем метрики
-        metrics = schemas.MessageMetrics(
+        metrics = dto.MessageMetrics(
             views=message.views,
             forwards=message.forwards,
             replies=message.replies and message.replies.replies
         )
 
-        return schemas.TelegramMessageDTO(
+        return dto.TelegramMessageDTO(
             id=message.id,
             text=message.message or None,
             date=message.date,
@@ -62,8 +61,8 @@ class TelegramMessageMapper:
     @staticmethod
     def from_tg_messages(
             messages: t.Union[t.List[tt_types.Message], t.List[aio_types.Message]], is_aiogram=True
-    ) -> schemas.TelegramMessagesListDTO:
-        dto_list = schemas.TelegramMessagesListDTO()
+    ) -> dto.TelegramMessagesListDTO:
+        dto_list = dto.TelegramMessagesListDTO()
         for message in messages:
             try:
                 if is_aiogram:
@@ -81,42 +80,42 @@ class TelegramMessageMapper:
         return dto_list
 
     @staticmethod
-    def _get_aiogram_message_type(message: aio_types.Message) -> schemas.MessageType:
+    def _get_aiogram_message_type(message: aio_types.Message) -> dto.MessageType:
         """Определяет тип сообщения."""
         message_content_type = message.content_type
         if message_content_type == aio_content_type.TEXT:
-            return schemas.MessageType.TEXT
+            return dto.MessageType.TEXT
         if message_content_type == aio_content_type.VIDEO:
-            return schemas.MessageType.VIDEO
+            return dto.MessageType.VIDEO
         if message_content_type == aio_content_type.AUDIO or aio_content_type.VOICE:
-            return schemas.MessageType.VOICE
+            return dto.MessageType.VOICE
         if message_content_type == aio_content_type.ANIMATION:
-            return schemas.MessageType.ANIMATION
-        return schemas.MessageType.TEXT
+            return dto.MessageType.ANIMATION
+        return dto.MessageType.TEXT
 
 
 
     @staticmethod
-    def _get_teletone_message_type(message: tt_types.Message) -> schemas.MessageType:
+    def _get_teletone_message_type(message: tt_types.Message) -> dto.MessageType:
         """Определяет тип сообщения."""
         if not message.media:
-            return schemas.MessageType.TEXT
+            return dto.MessageType.TEXT
 
         if isinstance(message.media, tt_types.MessageMediaPhoto):
-            return schemas.MessageType.PHOTO
+            return dto.MessageType.PHOTO
         elif isinstance(message.media, tt_types.MessageMediaDocument):
             # Детализируем по mime_type
             doc = message.media.document
             mime_type = getattr(doc, 'mime_type', '')
 
             if 'video' in mime_type:
-                return schemas.MessageType.VIDEO
+                return dto.MessageType.VIDEO
             elif 'audio' in mime_type or 'voice' in mime_type:
-                return schemas.MessageType.VOICE
+                return dto.MessageType.VOICE
             else:
-                return schemas.MessageType.DOCUMENT
+                return dto.MessageType.DOCUMENT
 
-        return schemas.MessageType.TEXT
+        return dto.MessageType.TEXT
 
 
 class TelegramUserMapper:
@@ -125,12 +124,12 @@ class TelegramUserMapper:
     @staticmethod
     def get_user_from_telethon_raw_data(
             entity: tt_types.User
-    ) -> schemas.TelegramUserDTO:
+    ) -> dto.TelegramUserDTO:
         """Конвертирует telethon сущность в DTO."""
 
         user_type = TelegramUserMapper._get_entity_type(entity)
 
-        return schemas.TelegramUserDTO(
+        return dto.TelegramUserDTO(
             id=entity.id,
             username=getattr(entity, 'username', None),
             first_name=getattr(entity, 'first_name', None),
