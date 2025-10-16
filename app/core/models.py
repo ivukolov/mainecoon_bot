@@ -1,9 +1,10 @@
 import logging
 from datetime import date, datetime, timezone
 import typing as t
+from decimal import Decimal
 
 import sqlalchemy as sa
-from sqlalchemy import DateTime
+import sqlalchemy.orm as orm
 from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm.collections import InstrumentedList
@@ -12,17 +13,16 @@ logger = logging.getLogger(__name__)
 
 T = t.TypeVar('T', bound='BaseModel')
 
-class BaseModel(AsyncAttrs, DeclarativeBase):
+class BaseModelNoID(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
-    id: Mapped[int] = mapped_column(primary_key=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+        sa.DateTime(timezone=True),
         default=datetime.now(timezone.utc),
         comment='Дата создания'
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+        sa.DateTime(timezone=True),
         default=datetime.now(timezone.utc),
         onupdate=datetime.now(timezone.utc),
         comment='Дата обновления'
@@ -94,3 +94,8 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
             logger.error(f"Ошибка в работе метода create_or_update {e}", exc_info=True)
             await session.rollback()
             raise e
+
+class BaseModel(BaseModelNoID):
+    __abstract__ = True
+
+    id: Mapped[int] = mapped_column(primary_key=True)
