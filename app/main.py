@@ -13,7 +13,7 @@ from sqladmin import Admin
 
 from utils.bot_utils import bot_send_message
 from database.db import session_factory, get_db_session_directly
-from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddleware, UserMiddleware
+from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddleware, UserMiddleware, CatAdsServiceMiddleware
 from clients.teletone import TeletonClientManager
 from web.app import run_fastapi
 from config import settings
@@ -48,6 +48,7 @@ async def main():
     dp.update.middleware(TeletonClientMiddleware(tt_client_manager))
     dp.update.middleware(DatabaseMiddleware(session_factory))
     dp.update.middleware(UserMiddleware())
+    dp.update.middleware(CatAdsServiceMiddleware())
     dp.update.middleware(BotMiddleware(bot))
     try:
         async with asyncio.TaskGroup() as tg:
