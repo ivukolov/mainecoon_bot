@@ -15,6 +15,7 @@ from utils.bot_utils import bot_send_message
 from database.db import session_factory, get_db_session_directly
 from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddleware, UserMiddleware, CatAdsServiceMiddleware
 from clients.teletone import TeletonClientManager
+from utils.cache import RedisCache
 from web.app import run_fastapi
 from config import settings
 from handlers import routers
@@ -30,7 +31,8 @@ async def run_bot(dp: Dispatcher, bot: Bot):
 async def main():
     # Инициализация клиента
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    storage = RedisStorage.from_url(settings.REDIS_STORAGE)
+    cache_storage = RedisCache()
+    storage = RedisStorage.from_url(settings.REDIS_AIOGRAM_STORAGE)
     dp = Dispatcher(storage=storage)
     for router in routers:
         dp.include_router(router)
@@ -48,7 +50,7 @@ async def main():
     dp.update.middleware(TeletonClientMiddleware(tt_client_manager))
     dp.update.middleware(DatabaseMiddleware(session_factory))
     dp.update.middleware(UserMiddleware())
-    dp.update.middleware(CatAdsServiceMiddleware())
+    dp.update.middleware(CatAdsServiceMiddleware(cache_storage=cache_storage))
     dp.update.middleware(BotMiddleware(bot))
     try:
         async with asyncio.TaskGroup() as tg:
