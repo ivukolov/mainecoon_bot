@@ -1,20 +1,23 @@
 from logging import getLogger
+from typing import List
 
 import sqlalchemy as sa
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InputMediaPhoto
+from aiogram_media_group import media_group_handler
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from keyboards.lexicon import MainMenu, CatGenders, AdsUserApprove
 from keyboards import main_menu
-from database import User
+from database import User, CatAd, Photo
+from services.ads import CatAdsService
 from utils.bot_utils import get_referral, check_user_subscribe, get_group_login
 from handlers.ads.states import CatForm
 from handlers.ads import keyboards as ads_kb
-from handlers.ads.schema import CatData
+from handlers.ads.schema import CatAdsSchema
 
 logger = getLogger(__name__)
 logger.info(f'Инициализируем роутер {__name__}')
@@ -83,7 +86,7 @@ async def ads_menu(message: Message, db: AsyncSession, tg_user: User,  state: FS
 async def ads_process_name(message: Message, state: FSMContext):
     """Обработка имени"""
     try:
-        name = CatData(name=message.text)
+        name = CatAdsSchema(name=message.text)
     except ValueError:
         return await message.answer(
             f'Макс длинна: {settings.CAT_NAME_MAX_LENGTH} символов'
@@ -97,8 +100,8 @@ async def ads_process_gender(message: Message, state: FSMContext):
     """Обработка пола"""
     cat_genders: set = CatGenders.get_values()
     if message.text in cat_genders:
-        gender = CatData(gender=message.text)
-        await state.update_data(gender=gender.gender)
+        gender = CatAdsSchema(gender=message.text)
+        await state.update_data(gender=message.text)
         await state.set_state(CatForm.birth_date)
         return await message.answer(
             f"Введите дату рождения в формате: {settings.CAT_BIRTH_DATE_INFO}:",
@@ -112,12 +115,12 @@ async def ads_process_gender(message: Message, state: FSMContext):
 async def ads_process_birth_date(message: Message, state: FSMContext):
     """Обработка даты рождения"""
     try:
-        cat_data = CatData(birth_date=message.text)
+        cat_data = CatAdsSchema(birth_date=message.text)
     except ValueError as e:
         return await message.answer(
             f'Некорректный формат даты, должна быть: {settings.CAT_BIRTH_DATE_INFO}:'
         )
-    await state.update_data(birth_date=cat_data.birth_date)
+    await state.update_data(birth_date=message.text)
     await state.set_state(CatForm.color)
     await message.answer("Введите окрас котика:", reply_markup=main_menu.cancel_kb())
 
@@ -125,13 +128,13 @@ async def ads_process_birth_date(message: Message, state: FSMContext):
 async def ads_process_color(message: Message, state: FSMContext):
     """Обработка окраса"""
     try:
-        cat_data = CatData(color=message.text)
+        CatAdsSchema(color=message.text)
     except ValueError:
         return await message.answer(
             f'Макс длинна: {settings.CAT_COLOR_MAX_LENGTH} символов'
         )
 
-    await state.update_data(color=cat_data.color)
+    await state.update_data(color=message.text)
     await state.set_state(CatForm.cattery)
     await message.answer("Введите название питомника:", reply_markup=main_menu.cancel_kb())
 
@@ -139,12 +142,12 @@ async def ads_process_color(message: Message, state: FSMContext):
 async def ads_process_cattery(message: Message, state: FSMContext):
     """Обработка питомника"""
     try:
-        cat_data = CatData(cattery=message.text)
+        CatAdsSchema(cattery=message.text)
     except ValueError:
         return await message.answer(
             f'Макс длинна: {settings.CAT_CATTERY_MAX_LENGTH} символов'
         )
-    await state.update_data(cattery=cat_data.cattery)
+    await state.update_data(cattery=message.text)
     await state.set_state(CatForm.price)
     await message.answer("Введите цену котика:", reply_markup=main_menu.cancel_kb())
 
@@ -152,7 +155,7 @@ async def ads_process_cattery(message: Message, state: FSMContext):
 async def process_price(message: Message, state: FSMContext):
     """Обработка цены"""
     try:
-        cat_data = CatData(price=message.text)
+        CatAdsSchema(price=message.text)
     except ValueError as e:
         return await message.answer(
             f'Цена должна быть числом'
@@ -165,61 +168,66 @@ async def process_price(message: Message, state: FSMContext):
 async def ads_process_contacts(message: Message, state: FSMContext):
     """Обработка контактов"""
     try:
-        cat_data = CatData(contacts=message.text)
+        CatAdsSchema(contacts=message.text)
     except ValueError as e:
         return await message.answer(
             f'Мин длинна:  {settings.CAT_CONTACTS_MIN_LENGTH} символов'
         )
     await state.update_data(contacts=message.text)
     await state.set_state(CatForm.photo)
-    await message.answer("Отправьте фото котика:", reply_markup=main_menu.cancel_kb())
+    return await message.answer("Отправьте фото котика:", reply_markup=main_menu.cancel_kb())
 
-@ads_router.message(CatForm.photo, F.photo)
-async def ads_process_photo(message: Message, state: FSMContext):
+
+@ads_router.message(CatForm.photo, F.media_group_id)
+@media_group_handler()
+async def ads_process_photo(messages: List[Message], state: FSMContext,  cat_ads_service: 'CatAdsService'):
+    """Обработка медиа группы"""
+    return await messages[-1].answer('Нельзя отправлять несколько фотографий')
+    # return await messages[-1].reply_media_group(
+    #     [
+    #         InputMediaPhoto(
+    #             media=m.photo[-1].file_id,
+    #             caption=m.caption,
+    #             caption_entities=m.caption_entities,
+    #         )
+    #         for m in messages
+    #     ]
+    # )
+    #
+
+@ads_router.message(CatForm.photo, F.photo, F.media_group_id == None)
+async def ads_process_photo(message: Message ,state: FSMContext,  cat_ads_service: CatAdsService):
     """Обработка фото"""
-    # Сохраняем file_id фото
-    photo_id = message.photo[-1].file_id
-    cat_data = CatData(photo_id=photo_id)
-    await state.update_data(photo_id=cat_data.photo_id)
 
+    photo_id = message.photo[-1].file_id
+    photos = [photo_id,]
+    await state.update_data(photos=photos)
     # Получаем все данные из состояния
     data = await state.get_data()
-
-    # Формируем сообщение с результатами
-    result_text = (
-        "✅ Рекламный пост \n\n"
-        f"🐱 Имя: {data['name']}\n"
-        f"⚧ Пол: {data['gender']}\n"
-        f"📅 Дата рождения: {data['birth_date']}\n"
-        f"🎨 Окрас: {data['color']}\n"
-        f"🏠 Питомник: {data['cattery']}\n"
-        f"💰 Цена: {data['price']}\n"
-        f"📞 Контакты: {data['contacts']}"
+    media_message = cat_ads_service.get_media_message(ad_message=data)
+    # Отправляем фото с подписью для проверки пользователю!
+    await message.reply_media_group(
+        media=media_message,
     )
-
-    # Отправляем фото с подписью на модерацию
-    await message.answer_photo(
-        data['photo_id'],
-        caption=result_text,
-        reply_markup=ads_kb.ads_cat_send_to_moderate_kb()
-    )
-    await state.set_state(CatForm.approve)
-    await state.update_data(result_text=result_text)
+    await message.answer('Внимательно всё проверьте перед отправкой!',reply_markup=ads_kb.ads_cat_send_to_moderate_kb())
+    return await state.set_state(CatForm.approve)
 
 @ads_router.message(CatForm.approve)
-async def ads_approve_(message: Message, state: FSMContext, tg_user: User,):
+async def ads_approve(message: Message, state: FSMContext, tg_user: User, cat_ads_service: 'CatAdsService'):
     data = await state.get_data()
-    print(type(data['birth_date']))
+    #await cat_ads_service.save_ad_message(data, author=tg_user)
     if message.text == AdsUserApprove.TO_MODERATE.value.name:
+        await state.clear()
         await message.answer(
             'Рекламный пост отправлен но модерацию',
             reply_markup = main_menu.main_menu_kb()
         )
-        await message.answer_photo(
-            data['photo_id'],
-            caption=data['result_text'],
-
-        )
+        await cat_ads_service.save_ad_message(data, author=tg_user)
+        # await message.answer_photo(
+        #     data['photo_id'],
+        #     caption=data['result_text'],
+        #
+        # )
     elif message.text == AdsUserApprove.REPEAT.value.name:
         await state.set_state(CatForm.name)
         await message.answer(
