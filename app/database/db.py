@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker, AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,14 +15,17 @@ AsyncSessionLocal = async_sessionmaker(
 )
 session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+@asynccontextmanager
 async def get_db_session() -> AsyncSession:
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()  # Автоматический коммит при успехе
-        except Exception:
-            await session.rollback()  # Роллбэк при ошибке
-            raise
+    session = AsyncSessionLocal()
+    try:
+        yield session
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
 
 
 async def get_db_session_directly():
