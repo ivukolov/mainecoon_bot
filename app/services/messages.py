@@ -5,7 +5,7 @@ import aiogram.types as aio_types
 from sqlalchemy.ext.asyncio import AsyncSession
 from telethon import TelegramClient
 
-from mappers import schemas
+from schemas.dto import TelegramUserDTO, TelegramMessagesListDTO, TelegramMessageDTO
 from utils.parsers import TextParser, TextCleaner
 from config import settings
 from database import Post, Tag, User
@@ -21,11 +21,11 @@ class MessagesService:
             session: AsyncSession,
             bot_user: t.Optional[User] = None,
             messages: t.Union[t.List[tt_types.Message], t.List[aio_types.Message]] = None,
-            users: t.Optional[schemas.TelegramUserDTO] = None,
+            users: t.Optional[TelegramUserDTO] = None,
             is_aiogram: bool = True,
     ):
         self.session = session
-        self.messages_dto: schemas.TelegramMessagesListDTO = self.__handle_message(
+        self.messages_dto: TelegramMessagesListDTO = self.__handle_message(
             messages, is_aiogram=is_aiogram
         )
         self.users = users
@@ -41,7 +41,7 @@ class MessagesService:
         tag_objects: dict = await Tag.bulk_get_or_create_tags(session=self.session, tags=post_tags)
         return list(tag for tag in tag_objects.values())
 
-    async def service_and_save_messages(self) -> schemas.TelegramMessagesListDTO:
+    async def service_and_save_messages(self) -> TelegramMessagesListDTO:
         """Основной метод парсинга и сохранения."""
         for text_message in self.messages_dto.messages:
             if text_message.text:
@@ -50,7 +50,7 @@ class MessagesService:
 
     async def process_single_message(
             self,
-            message: schemas.TelegramMessageDTO,
+            message: TelegramMessageDTO,
     ) -> None:
         title = TextParser.extract_title(
             message.text,
