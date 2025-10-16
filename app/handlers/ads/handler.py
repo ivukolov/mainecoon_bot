@@ -23,6 +23,7 @@ logger.info(f'Инициализируем роутер {__name__}')
 
 ads_router = Router()
 
+
 @ads_router.callback_query(ads_kb.ReferralCheck.filter())
 async def ads_handle_referral_invite(
         callback_query: CallbackQuery, callback_data: ads_kb.ReferralCheck, db: AsyncSession, tg_user: User
@@ -64,7 +65,7 @@ async def ads_donate_btn(callback_query: CallbackQuery, db: AsyncSession, tg_use
 
 
 @ads_router.message(F.text == MainMenu.ADS.value.name)
-async def ads_menu(message: Message, db: AsyncSession, tg_user: User,  state: FSMContext):
+async def ads_menu(message: Message, db: AsyncSession, tg_user: User, state: FSMContext):
     """Обработка кнопки меню"""
     users_count = await tg_user.get_invited_users_cnt(session=db)
     if users_count >= 0:
@@ -81,18 +82,21 @@ async def ads_menu(message: Message, db: AsyncSession, tg_user: User,  state: FS
         reply_markup=ads_kb.ads_publisher_kb()
     )
 
+
 @ads_router.message(CatForm.name)
 async def ads_process_name(message: Message, state: FSMContext):
     """Обработка имени"""
     try:
         name = CatAdsSchema(name=message.text)
-    except ValueError:
+    except ValueError as e:
+        logger.warning('Ошибка обработки имени %s', e)
         return await message.answer(
             f'Макс длинна: {settings.CAT_NAME_MAX_LENGTH} символов'
         )
     await state.update_data(name=message.text)
     await state.set_state(CatForm.gender)
     await message.answer("Выберите пол котика:", reply_markup=ads_kb.ads_cat_gender_kb())
+
 
 @ads_router.message(CatForm.gender)
 async def ads_process_gender(message: Message, state: FSMContext):
@@ -110,6 +114,7 @@ async def ads_process_gender(message: Message, state: FSMContext):
         "Для выбора пола котика - воспользуйтесь кнопками", reply_markup=ads_kb.ads_cat_gender_kb()
     )
 
+
 @ads_router.message(CatForm.birth_date)
 async def ads_process_birth_date(message: Message, state: FSMContext):
     """Обработка даты рождения"""
@@ -122,6 +127,7 @@ async def ads_process_birth_date(message: Message, state: FSMContext):
     await state.update_data(birth_date=message.text)
     await state.set_state(CatForm.color)
     await message.answer("Введите окрас котика:", reply_markup=main_menu.cancel_kb())
+
 
 @ads_router.message(CatForm.color)
 async def ads_process_color(message: Message, state: FSMContext):
@@ -137,6 +143,7 @@ async def ads_process_color(message: Message, state: FSMContext):
     await state.set_state(CatForm.cattery)
     await message.answer("Введите название питомника:", reply_markup=main_menu.cancel_kb())
 
+
 @ads_router.message(CatForm.cattery)
 async def ads_process_cattery(message: Message, state: FSMContext):
     """Обработка питомника"""
@@ -150,6 +157,7 @@ async def ads_process_cattery(message: Message, state: FSMContext):
     await state.set_state(CatForm.price)
     await message.answer("Введите цену котика:", reply_markup=main_menu.cancel_kb())
 
+
 @ads_router.message(CatForm.price)
 async def process_price(message: Message, state: FSMContext):
     """Обработка цены"""
@@ -162,6 +170,7 @@ async def process_price(message: Message, state: FSMContext):
     await state.update_data(price=message.text)
     await state.set_state(CatForm.contacts)
     await message.answer("Введите контактные данные:", reply_markup=main_menu.cancel_kb())
+
 
 @ads_router.message(CatForm.contacts)
 async def ads_process_contacts(message: Message, state: FSMContext):
@@ -179,49 +188,62 @@ async def ads_process_contacts(message: Message, state: FSMContext):
 
 @ads_router.message(CatForm.photo, F.media_group_id)
 @media_group_handler()
-async def ads_process_photos(messages: List[Message], state: FSMContext,  cat_ads_service: CatAdsService):
+async def ads_process_photos(messages: List[Message], state: FSMContext, cat_ads_service: CatAdsService):
     """Обработка медиа группы"""
+    # Получаем фотографии самого лучшего качества
     photos = [m.photo[-1].file_id for m in messages]
-    await state.update_data(photos=photos)
+    # Получаем данные из FSM
     data = await state.get_data()
-    media_message = cat_ads_service.get_media_message(ad_message=data)
-    await messages[-1].reply_media_group(media=media_message)
+    # Распаковываем в валидатор
+    cat_ad_schema = CatAdsSchema(**data)
+    # Добавляем фотографии
+    cat_ad_schema.add_photos(photos)
+    # Обновляем данные сформированным словарём
+    await state.update_data(photos=cat_ad_schema.get_photos())
+    # Формируем медисасообщение
+    media_message = cat_ads_service.get_media_message_from_schema(cat_ad_schema)
+    # Отправляем фото с подписью для проверки пользователю!
+    await messages[-1].answer_media_group(media=media_message)
     await messages[-1].answer(
-        'Внимательно всё проверьте перед отправкой!',reply_markup=ads_kb.ads_cat_send_to_moderate_kb()
+        'Внимательно всё проверьте перед отправкой!', reply_markup=ads_kb.ads_cat_send_to_moderate_kb()
     )
     return await state.set_state(CatForm.approve)
 
-@ads_router.message(CatForm.photo, F.photo)
-async def ads_process_photo(message: Message, state: FSMContext,  cat_ads_service: CatAdsService):
-    """Обработка фото"""
 
+@ads_router.message(CatForm.photo, F.photo, F.media_group_id == None)
+async def ads_process_photo(message: Message, state: FSMContext, cat_ads_service: CatAdsService):
+    """Обработка фото"""
+    # Получаем фотографии самого лучшего качества
     photo_id = message.photo[-1].file_id
-    photos = [photo_id,]
-    await state.update_data(photos=photos)
-    # Получаем все данные из состояния
+    # Получаем данные из FSM
     data = await state.get_data()
-    media_message = cat_ads_service.get_media_message(ad_message=data)
+    cat_ad_schema = CatAdsSchema(**data)
+    cat_ad_schema.add_photos([photo_id, ])
+    await state.update_data(photos=cat_ad_schema.get_photos())
+    media_message = cat_ads_service.get_media_message_from_schema(cat_ad_schema)
     # Отправляем фото с подписью для проверки пользователю!
-    await message.reply_media_group(
+    await message.answer_media_group(
         media=media_message,
     )
     await message.answer(
-        'Внимательно всё проверьте перед отправкой!',reply_markup=ads_kb.ads_cat_send_to_moderate_kb()
+        'Внимательно всё проверьте перед отправкой!', reply_markup=ads_kb.ads_cat_send_to_moderate_kb()
     )
     return await state.set_state(CatForm.approve)
+
 
 @ads_router.message(CatForm.approve)
 async def ads_approve(message: Message, state: FSMContext, tg_user: User, cat_ads_service: CatAdsService):
     data = await state.get_data()
-    #await cat_ads_service.save_ad_message(data, author=tg_user)
+    # await cat_ads_service.save_ad_message(data, author=tg_user)
     if message.text == AdsUserApprove.TO_MODERATE.value.name:
         await state.clear()
         await message.answer(
             'Рекламный пост отправлен но модерацию',
-            reply_markup = main_menu.main_menu_kb()
+            reply_markup=main_menu.main_menu_kb()
         )
         await cat_ads_service.save_ad_message(data, author=tg_user)
     elif message.text == AdsUserApprove.REPEAT.value.name:
+        await state.clear()
         await state.set_state(CatForm.name)
         await message.answer(
             'Введите имя кота',
