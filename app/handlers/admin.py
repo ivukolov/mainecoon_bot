@@ -17,7 +17,7 @@ from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractiv
 from database.users.models import User
 from utils.decorators import admin_required
 from mappers.telegram import TelegramMessageMapper, TelegramUserMapper
-from mappers.schemas import TelegramMessagesListDTO
+from schemas.dto import TelegramMessagesListDTO
 from services.messages import MessagesService
 from config import settings
 
