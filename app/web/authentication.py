@@ -33,7 +33,7 @@ class AdminAuth(AuthenticationBackend):
 
     async def is_brootforce(self, redis_cash: RedisCache, username: str) -> bool:
         key = 'failed_attempts'
-        user_attempts_dict = await redis_cash.get_json(username)
+        user_attempts_dict = await redis_cash.fetch_json(username)
         if user_attempts_dict:
             failed_attempts: int = user_attempts_dict.get(key)
             if failed_attempts >= settings.MAX_FAILED_ATTEMPTS:
@@ -41,7 +41,7 @@ class AdminAuth(AuthenticationBackend):
                 return True
             else:
                 failed_attempts+=1
-                await redis_cash.set_json(username, {key: failed_attempts}, ttl=settings.USER_BLOCK_TIMEOUT)
+                await redis_cash.put_json(username, {key: failed_attempts}, ttl=settings.USER_BLOCK_TIMEOUT)
         return False
 
     async def logout(self, request: Request) -> bool:
