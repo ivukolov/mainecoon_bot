@@ -2,3 +2,4 @@ from middlewares.bot import BotMiddleware
 from middlewares.db import DatabaseMiddleware
 from middlewares.teletone import TeletonClientMiddleware
 from middlewares.users import UserMiddleware
+from middlewares.ads_middleware import CatAdsServiceMiddleware
