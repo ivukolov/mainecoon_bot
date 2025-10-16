@@ -16,11 +16,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, validates, backr
 from sqlalchemy.sql import expression
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from exceptions import ads
 from core.models import BaseModel
 from config import settings
 from database.users.roles import UserRole
-from database.blog.models import Ad
+from database.blog.models import CatAd
 
 logger = getLogger(__name__)
 
@@ -105,7 +104,7 @@ class User(BaseModel):
         sa.String(settings.USER_INFO_LENGTH), nullable=True, unique=False, comment='Доп информация'
     )
     is_active: Mapped[bool] = mapped_column(nullable=False, default=False, comment='Является подписчиком канала')
-    ads: Mapped[t.List['Ad']] = relationship('Ad', back_populates="author")
+    cat_ads: Mapped[t.List['CatAd']] = relationship('CatAd', back_populates="author")
     posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
     invited_user = relationship(
         'User',
@@ -226,7 +225,7 @@ class User(BaseModel):
     async def invite_user(self, referral: t.Union[str, int], session: AsyncSession) -> None:
         inviting_user: User | None = await User.one_or_none(session=session, id=referral)
         if not inviting_user:
-            raise ads.UserNotFoundError()
+            raise ValueError('Пользователь не найден!')
         await self.add_invited_user(session, inviting_user)
 
 
