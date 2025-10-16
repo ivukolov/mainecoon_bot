@@ -97,7 +97,11 @@ USERS_CNT = 15 # Количество приглашенных людей для
 # Redis.
 REDIS_HOST: Final[str] = os.getenv("REDIS_HOST")
 REDIS_PORT: Final[int] = int(os.getenv("REDIS_PORT"))
-REDIS_STORAGE: Final[str] = f"redis://{REDIS_HOST}:{REDIS_PORT}"
+REDIS_AIOGRAM_DB: Final[int] = 0
+REDIS_CACHE_DB: Final[int] = 1
+REDIS_STORAGE = f"redis://{REDIS_HOST}:{REDIS_PORT}"
+REDIS_AIOGRAM_STORAGE: Final[str] = f"{REDIS_STORAGE}/{REDIS_AIOGRAM_DB}"
+REDIS_CASE_STORAGE: Final[str] = f"{REDIS_STORAGE}/{REDIS_CACHE_DB}"
 # Pyment.
 YOOKASSA_SHOP_ID: Final[str ]= os.getenv("YOOKASSA_SHOP_ID")
 YOOKASSA_SECRET_KEY: Final[str] = os.getenv("YOOKASSA_SECRET_KEY")
