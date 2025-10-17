@@ -1,9 +1,7 @@
-import logging
-from passlib.context import CryptContext
 from typing import Final
-from enum import Enum
 import os
 from pathlib import Path
+from passlib.context import CryptContext
 
 from dotenv import load_dotenv
 
@@ -110,8 +108,8 @@ MEDIA: Final[str] = "media"
 MEDIA_ROOT: Final[Path] = ROOT_DIR / MEDIA
 IMAGES: Final[str] = "images"
 IMAGES_ROOT: Final[Path] = MEDIA_ROOT / IMAGES
-VIDEOS: Final[str] = "videos"
-VIDEOS_ROOT: Final[Path] = MEDIA_ROOT / VIDEOS
+UPLOAD_DIR =  os.path.join(MEDIA, IMAGES)
+IMAGES_ROOT.mkdir(parents=True, exist_ok=True)
 # Logs
 LOGS_DIR: Final[Path] = ROOT_DIR / 'logs'
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
