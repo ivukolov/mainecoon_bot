@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, ValidationError, model_validator, field_v
 
 from database.users.roles import UserRole
 from database import User
-from utils.identifiers import generate_username_from_id
+from utils.identifiers import generate_uuid_from_str
 
 logger = getLogger(__name__)
 
@@ -29,6 +29,33 @@ class MessageType(str, Enum):
     STICKER = "sticker"
     POLL = "poll"
     ANIMATION = "animation"
+
+class MediaType(Enum):
+    PHOTO = '.jpg'
+    VIDEO = '.mp4'
+    VOICE = '.ogg'
+    STICKER = '.webp'
+    ANIMATION ='.mp4'
+
+MIME_TO_EXTENSION: Dict[str, str] = {
+    'image/jpeg': '.jpg',
+    'image/jpg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+    'image/gif': '.gif',
+
+    'video/mp4': '.mp4',
+    'video/quicktime': '.mov',
+    'video/x-msvideo': '.avi',
+    'video/x-matroska': '.mkv',
+    'video/webm': '.webm',
+
+    'audio/ogg': '.ogg',
+    'audio/mpeg': '.mp3',
+    'audio/wav': '.wav',
+    'audio/x-m4a': '.m4a'
+}
+
 
 class MessageMetrics(BaseModel):
     """Метрики сообщения."""
@@ -59,7 +86,7 @@ class TelegramUserDTO(BaseModel):
         if not username:
             try:
                 id = info.data['id']
-                username = generate_username_from_id(id)
+                username = generate_uuid_from_str(name=str(id))
             except ValueError:
                 raise
         return username
