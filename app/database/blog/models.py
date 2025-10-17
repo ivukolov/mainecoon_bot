@@ -1,11 +1,9 @@
 from datetime import datetime, date
 from decimal import Decimal
-from enum import StrEnum, Enum
 import typing as t
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
-from sqlalchemy.dialects.postgresql import JSONB
 
 from keyboards.lexicon import CatGenders
 from core.models import BaseModel
@@ -74,7 +72,7 @@ class Tag(BaseModel):
 class Category(BaseModel):
     __tablename__ = "categories"
 
-    id: orm.Mapped[int] = orm.mapped_column(primary_key=True, )
+    id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
     name: orm.Mapped[str] = orm.mapped_column(sa.String(50), unique=True, comment='Имя')
     slug: orm.Mapped[str] = orm.mapped_column(sa.String(50), unique=True)
 
@@ -127,23 +125,35 @@ class Post(BaseModel):
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
+cat_photos = sa.Table(
+    'cat_photos',
+    BaseModel.metadata,
+    sa.Column('id', sa.Integer, primary_key=True, autoincrement=True),
+    sa.Column('cat_ad_id', sa.Integer, sa.ForeignKey('cat_ads.id'), primary_key=True),
+    sa.Column('photo_id', sa.Integer, sa.ForeignKey('photos.id'), primary_key=True),
+)
+
 
 class Photo(BaseModel):
     __tablename__ = "photos"
 
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
-    photo_id: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=True, comment='id фотографии в телегам')
-    sort_order: orm.Mapped[int] = orm.mapped_column(default=0)
-    is_primary: orm.Mapped[bool] = orm.mapped_column(default=False)
-    cat_ad_id: orm.Mapped[int] = orm.mapped_column(
-        sa.ForeignKey('cat_ads.id'),
-        nullable=False,
-        comment='Ссылка на объявление'
+    photo_id: orm.Mapped[str] = orm.mapped_column(sa.String(100), nullable=False, comment='id фотографии в телегам')
+    file_name: orm.Mapped[str] = orm.mapped_column(sa.String(100), nullable=True)
+    file_path: orm.Mapped[str] = orm.mapped_column(sa.String(300), nullable=True)
+    file_size : orm.Mapped[int] = orm.mapped_column(sa.BIGINT,default=0)
+    sort_order: orm.Mapped[int] = orm.mapped_column(sa.SMALLINT, default=0)
+    is_primary: orm.Mapped[bool] = orm.mapped_column(sa.Boolean, default=False)
+
+    cat_ads: orm.Mapped[list['CatAd']] = orm.relationship(
+        "CatAd",
+        secondary=cat_photos,
+        back_populates="photos",
+        lazy='subquery'
     )
-    cat_ad: orm.Mapped['CatAd'] = orm.relationship("CatAd", back_populates="photos", lazy='subquery')
 
     def __str__(self):
-        return f"Фото: tg_foto_id: {self.photo_id}, user_id: {self.cat_ad_id}"
+        return f"Фото: tg_foto_id: {self.photo_id}"
 
 
 class CatAd(BaseModel):
@@ -164,13 +174,14 @@ class CatAd(BaseModel):
     contacts: orm.Mapped[str] = orm.mapped_column(sa.String(200), comment='Контактные данные')
     birth_date: orm.Mapped[date] = orm.mapped_column(sa.Date, comment='Дата рождения')
     color: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=False, comment='Цвет')
-    cattery: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=True, comment='Цвет')
+    cattery: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=True, comment='Питомник')
     photos: orm.Mapped[list['Photo']] = orm.relationship(
-        'Photo',
-        cascade='all, delete-orphan',  # автоматическое управление
-        order_by='Photo.sort_order',
-        back_populates="cat_ad",
-        uselist=True,
+        "Photo",
+        secondary=cat_photos,
+        back_populates="cat_ads",
+        lazy='subquery',
+        cascade="all, delete",
+        uselist=True
     )
     author: orm.Mapped['User'] = orm.relationship("User", back_populates="cat_ads", lazy='subquery')
 
@@ -184,19 +195,16 @@ class CatAd(BaseModel):
     async def get_ads(
             cls,
             session,
-            exclude_ids: t.Union[t.Optional[ t.Collection[int]]]=None,
+            exclude_ids: t.Optional[t.Collection[int]]=None,
             is_moderated=False,
             is_publicated=False
     ) -> t.List['CatAd']:
         exclude_ids = exclude_ids or []
-        query = sa.select(cls).where(
-            sa.and_(
+        query = sa.select(cls).where(sa.and_(
                 sa.not_(cls.id.in_(exclude_ids)),
                 cls.is_moderated == is_moderated,
                 cls.is_publicated == is_publicated
-            )
-        ).options(
-            orm.selectinload(cls.author),orm.selectinload(cls.photos)
-        ).order_by(cls.created_at)
+            )).options(
+            orm.selectinload(cls.author), orm.selectinload(cls.photos)).order_by(cls.created_at)
         result = await session.execute(query)
         return result.scalars().all()
