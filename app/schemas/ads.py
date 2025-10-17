@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from pydantic import BaseModel, Field, field_validator, ValidationError, model_validator, ConfigDict, field_serializer
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Any, Collection
 from datetime import date, datetime
 import re
 
@@ -16,6 +16,9 @@ class PhotoSchema(BaseModel):
 
     id: int | None = None
     photo_id: str | None = None
+    file_name: str | None = None
+    file_path: str | None = None
+    file_size : int | None = None
     sort_order: int = 0
     is_primary: bool = Field(default=False)
 
@@ -34,11 +37,14 @@ class BaseSchema(BaseModel):
         from_attributes = True
 
 
-    def add_photos(self, values: list) -> 'BaseSchema':
+    def add_photos(self, values: Collection[dict[str, Any]]) -> 'BaseSchema':
         for key, value in enumerate(values):
             self.photos.append(
                 PhotoSchema(
-                    photo_id=value,
+                    photo_id=value.get('photo_id'),
+                    file_name=value.get('file_name'),
+                    file_path=value.get('file_path'),
+                    file_size=value.get('file_size'),
                     sort_order=key,
                     is_primary = True if key == 0 else False,
                 )
@@ -60,7 +66,6 @@ class BaseSchema(BaseModel):
             except KeyError as e:
                 logger.error('Ошибка сортировки фотографий %s', model_dump )
         return tuple(self.model_dump(include={'photos'})['photos'])
-
 
 
 class CatAdsSchema(BaseSchema):
