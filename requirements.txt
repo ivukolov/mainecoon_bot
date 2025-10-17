@@ -215,6 +215,12 @@ pyaes==1.6.1
 # Админка для FastAPI
 fastapi-admin==1.0.4
 
+#Хранилише файлов для FastAPI
+fastapi_storages==0.3.0
+
+# Обработка фото используется в fastapi_storages
+pillow==12.0.0
+
 # Интернационализация
 babel==2.17.0
 
