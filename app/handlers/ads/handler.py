@@ -13,7 +13,7 @@ from keyboards.lexicon import MainMenu, CatGenders, AdsUserApprove
 from keyboards import main_menu
 from database import User
 from services.ads import CatAdsService
-from utils.bot_utils import get_referral, check_user_subscribe, get_group_login
+from utils.bot_utils import get_referral, check_user_subscribe, get_group_login, bot_save_photo_from_message
 from handlers.ads.states import CatForm
 from handlers.ads import keyboards as ads_kb
 from schemas.ads import CatAdsSchema
@@ -190,15 +190,10 @@ async def ads_process_contacts(message: Message, state: FSMContext):
 @media_group_handler()
 async def ads_process_photos(messages: List[Message], state: FSMContext, cat_ads_service: CatAdsService):
     """Обработка медиа группы"""
-    # Получаем фотографии самого лучшего качества
-    photos = [m.photo[-1].file_id for m in messages]
     # Получаем данные из FSM
     data = await state.get_data()
-    # Распаковываем в валидатор
-    cat_ad_schema = CatAdsSchema(**data)
-    # Добавляем фотографии
-    cat_ad_schema.add_photos(photos)
-    # Обновляем данные сформированным словарём
+    cat_ad_schema = cat_ads_service.get_pydentic_obj_from_fsm(foto_messages=messages, **data)
+    # Обновляем данные сформированным валидным словарём
     await state.update_data(photos=cat_ad_schema.get_photos())
     # Формируем медисасообщение
     media_message = cat_ads_service.get_media_message_from_schema(cat_ad_schema)
@@ -210,15 +205,15 @@ async def ads_process_photos(messages: List[Message], state: FSMContext, cat_ads
     return await state.set_state(CatForm.approve)
 
 
-@ads_router.message(CatForm.photo, F.photo, F.media_group_id == None)
+@ads_router.message(CatForm.photo, F.photo)
 async def ads_process_photo(message: Message, state: FSMContext, cat_ads_service: CatAdsService):
     """Обработка фото"""
     # Получаем фотографии самого лучшего качества
-    photo_id = message.photo[-1].file_id
+    # photo_id = message.photo[-1].file_id
+    # user_id = str(message.from_user.id)
     # Получаем данные из FSM
     data = await state.get_data()
-    cat_ad_schema = CatAdsSchema(**data)
-    cat_ad_schema.add_photos([photo_id, ])
+    cat_ad_schema = cat_ads_service.get_pydentic_obj_from_fsm(foto_messages=(message,), **data)
     await state.update_data(photos=cat_ad_schema.get_photos())
     media_message = cat_ads_service.get_media_message_from_schema(cat_ad_schema)
     # Отправляем фото с подписью для проверки пользователю!
@@ -233,15 +228,22 @@ async def ads_process_photo(message: Message, state: FSMContext, cat_ads_service
 
 @ads_router.message(CatForm.approve)
 async def ads_approve(message: Message, state: FSMContext, tg_user: User, cat_ads_service: CatAdsService):
-    data = await state.get_data()
     # await cat_ads_service.save_ad_message(data, author=tg_user)
     if message.text == AdsUserApprove.TO_MODERATE.value.name:
+        data = await state.get_data()
+        try:
+            await cat_ads_service.save_ad_message(data, author=tg_user)
+            await message.answer(
+                'Рекламный пост отправлен но модерацию',
+                reply_markup=main_menu.main_menu_kb()
+            )
+        except Exception as e:
+            logger.error("Не удалось отправить рекламный пост на модерацию %s", e)
+            await message.answer(
+                'Произошла неизвестная ошибка, пожалуйста свяжитесь с администратором канала!',
+                reply_markup=main_menu.main_menu_kb()
+            )
         await state.clear()
-        await message.answer(
-            'Рекламный пост отправлен но модерацию',
-            reply_markup=main_menu.main_menu_kb()
-        )
-        await cat_ads_service.save_ad_message(data, author=tg_user)
     elif message.text == AdsUserApprove.REPEAT.value.name:
         await state.clear()
         await state.set_state(CatForm.name)
