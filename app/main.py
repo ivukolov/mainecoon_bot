@@ -50,7 +50,7 @@ async def main():
     dp.update.middleware(TeletonClientMiddleware(tt_client_manager))
     dp.update.middleware(DatabaseMiddleware(session_factory))
     dp.update.middleware(UserMiddleware())
-    dp.update.middleware(CatAdsServiceMiddleware(cache_storage=cache_storage))
+    dp.update.middleware(CatAdsServiceMiddleware(cache_storage=cache_storage, bot=bot))
     dp.update.middleware(BotMiddleware(bot))
     try:
         async with asyncio.TaskGroup() as tg:
