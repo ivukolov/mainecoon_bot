@@ -22,13 +22,13 @@ async def start_moderation_watcher(bot: Bot):
 
     async with get_db_session() as session:
         async with RedisCache() as redis_cache:
-            cat_ads_service = CatAdsService(session, cache_storage=redis_cache)
+            cat_ads_service = CatAdsService(session, cache_storage=redis_cache, bot=bot)
             asyncio.create_task(
-                moderation_watcher(bot, cat_ads_service)
+                moderation_watcher(cat_ads_service)
             )
 
 
-async def moderation_watcher(bot: Bot, cat_ads_service: CatAdsService):
+async def moderation_watcher(cat_ads_service: CatAdsService):
     """
     Фоновая задача для периодической проверки базы
     """
@@ -36,14 +36,14 @@ async def moderation_watcher(bot: Bot, cat_ads_service: CatAdsService):
     admin_chat_id = settings.ADMIN_ID
     while True:
         try:
-            await check_pending_ads(bot, cat_ads_service)
+            await check_pending_ads(cat_ads_service)
             await asyncio.sleep(check_interval)
         except Exception as e:
             logging.error(f" Ошибка в moderation_watcher: %s", e)
             await asyncio.sleep(check_interval)  # все равно ждем перед повторной попыткой
 
 
-async def check_pending_ads(bot: Bot, cat_ads_service: 'CatAdsService'):
+async def check_pending_ads(cat_ads_service: 'CatAdsService'):
     """
     Проверяет наличие непромодерированных объявлений
     """
