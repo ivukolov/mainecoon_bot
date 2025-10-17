@@ -3,19 +3,69 @@ from logging import getLogger
 import typing as t
 from typing import Any, Coroutine
 
+import os
+
+import aiofiles
+from aiofiles import os as async_os
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram import Bot
 from aiogram.client.session import aiohttp
 from aiogram.enums import ChatMemberStatus
-from aiogram.types import ChatMember, ChatInviteLink
+from aiogram.types import ChatMember, ChatInviteLink, PhotoSize, Message
 
+from schemas.dto import MediaType
 from utils.cache import RedisCache
 from database.users.models import User
 from database.users.roles import UserRole
 from config import settings
 from exceptions.ads import DoubleSubscriptionError
+from utils.identifiers import generate_uuid_from_str
+from utils.files import save_file, get_images_paths
 
 logger = getLogger(__name__)
+
+
+def get_photo_name_from_file_id(file_id: str) -> str:
+   """Получает  имя формата - сгенерированный UUID с расширением .jpg из file_id"""
+   file_uuid = generate_uuid_from_str(file_id)
+   extension = MediaType.PHOTO.value
+   return f'{file_uuid}{extension}'
+
+
+async def bot_save_photo_from_message(bot: Bot, file_id: str, user_id: str) -> dict[str, Any]:
+   """Сохраняет фото из сообщения
+   Arguments:
+      bot: Bot сущность из aiogram
+      file_id: telegram_id фотографии
+      user_id: id пользователя телеграм для создании директории
+   Returns:
+      Возвращает словарь с результатом сохранения
+   Example:
+      'photo_id': 'AgACAg...',
+      'file_name': '2702fbe2-179e-57f2-b313-e8d1463d60a6.jpg',
+      'file_path': 'images\\1382354642\\2702fbe2-179e-57f2-b313-e8d1463d60a6.jpg',
+      'file_size': 139954\n
+   """
+
+   file = await bot.get_file(file_id)
+   # Загружаем байты
+   file_bytes = await bot.download_file(file.file_path)
+   # Генерируем имя файла
+   file_name = get_photo_name_from_file_id(file_id)
+   # Получаем пути
+   local_path, global_path = get_images_paths(user_id)
+   # Получаем url путь
+   local_file_path = os.path.join(local_path, file_name)
+   # Получаем место сохранения файла
+   global_file_path = os.path.join(global_path, file_name)
+   result = await save_file(global_file_path, file_bytes)
+   return {
+      'photo_id': file_id,
+      'file_name': file_name,
+      'file_path': local_file_path if result else None, # Если файл сохранился - передаём локальный путь
+      'file_size': file.file_size,
+   }
+
 
 async def bot_send_message(text: str) -> None:
    url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
@@ -89,6 +139,9 @@ async def get_or_create_admin_user(session: AsyncSession) -> User:
    )
    return admin
 
+
+def get_tg_username(username):
+   return f"@{username}"
 
 def reverse_tg_url(login: str) -> str:
    return f"https://t.me/{login}"
