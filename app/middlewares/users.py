@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from aiogram.types import TelegramObject, Message, User as TgUser
     from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils.identifiers import generate_username_from_id
+from utils.identifiers import generate_uuid_from_str
 from database.users.models import User
 from database.users.roles import UserRole
 from config import settings
@@ -24,7 +24,7 @@ class UserMiddleware(BaseMiddleware):
         telegram_user: TgUser = data.get("event_from_user")
         try:
             if telegram_user:
-                username = telegram_user.username or generate_username_from_id(tg_user_id=telegram_user.id)
+                username = telegram_user.username or generate_uuid_from_str(name=str(telegram_user.id))
                 user, created = await User.get_or_create(session, id=telegram_user.id, defaults={
                     'first_name': telegram_user.first_name,
                     'last_name': telegram_user.last_name,
