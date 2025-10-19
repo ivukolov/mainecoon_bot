@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from pydantic import BaseModel, Field, field_validator, ValidationError, model_validator, ConfigDict, field_serializer
-from typing import Optional, List, Union, Any, Collection
+from typing import Optional, List, Union, Any, Collection, Dict
 from datetime import date, datetime
 import re
 
@@ -58,14 +58,25 @@ class BaseSchema(BaseModel):
             key=lambda x: (0 if x['is_primary'] else 1, x['sort_order'])
         )
 
-    def get_photos(self, is_sorted=False):
+    def get_photo_id_tuple(self) -> tuple[str, ...]:
+        return tuple(foto.photo_id for foto in self.photos)
+
+    def get_photos(self, is_sorted: bool=False) -> List[Dict[str, Any]]:
+        """
+        Метод возвращает словарь с дампом PhotoSchema
+            Arguments:
+                is_sorted: bool Сортирует фотографии перед выдачей
+        """
         model_dump = self.model_dump(include={'photos'})['photos']
         if is_sorted:
             try:
                 model_dump = sorted(model_dump,key=lambda x: (0 if x['is_primary'] else 1, x['sort_order']))
             except KeyError as e:
                 logger.error('Ошибка сортировки фотографий %s', model_dump )
-        return tuple(self.model_dump(include={'photos'})['photos'])
+        return self.model_dump(include={'photos'})['photos']
+
+    def getdata_without_photos(self, is_sorted=False):
+        return self.model_dump(mode='python', exclude={'photos'})
 
 
 class CatAdsSchema(BaseSchema):
@@ -97,6 +108,7 @@ class CatAdsSchema(BaseSchema):
         None,
         min_length=settings.CAT_CONTACTS_MIN_LENGTH
     )
+    author_id: int | None = None
 
 
     @field_serializer('gender')
