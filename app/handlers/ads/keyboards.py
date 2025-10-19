@@ -3,10 +3,13 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 
 from keyboards.lexicon import ActionButtons, AdsMenu, CatGenders, AdsUserApprove
 
+class ModerateAd(CallbackData, prefix="moderate_ads"):
+    ads_id: int
+    action: str
+
 class ReferralCheck(CallbackData, prefix="referral_check"):
     user_id: int
     referral: int
-
 
 def referral_check_kb(user_id: int, referral: int) -> InlineKeyboardMarkup:
     """Кнопки для работы с реферальной ссылкой"""
