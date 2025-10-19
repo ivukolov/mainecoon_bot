@@ -10,6 +10,7 @@ load_dotenv(override=True)
 DEBUG: Final[bool] = os.getenv("DEBUG", False) == True
 ENCODING: Final[str] = "utf-8" # Кодировка в проекте.
 ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent
+TEMP_DIR: Final[Path] = ROOT_DIR / "tmp"
 # Используется для имени web админки интерфейса
 PROJECT_NAME: Final[str] = 'Кото-Вет помощник'
 
@@ -18,14 +19,17 @@ PROJECT_NAME: Final[str] = 'Кото-Вет помощник'
 ADMIN_ID: Final[int] = int(os.getenv("ADMIN_ID"))
 ADMIN_USERNAME: Final[str] = os.getenv("ADMIN_USERNAME")
 ADMIN_PASSWORD: Final[str] = os.getenv("ADMIN_PASSWORD")
-# BOT_ID = 7714336436
-# BOT_FIRST_NAME = "Кото-Вет Помощник"
-# BOT_USERNAME = 'CatVetHelperBot'
-# BOT_INFO = 'Главный трудяга канала'
 ## Бот
 PARTNERS_TAG: Final[str] = '#Партнёры'
 BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, получается у @botfather
 CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID")
+# Whatcher - background task. Проверяет базу на наличие объявлений для модерации и уже модерированных.
+# Для последующей отправки соответствующему пользователю.
+## Интервал запуска проверки в секундах
+CHECK_INTERVAL: Final[int]  = 60
+## Время для повторного напоминания в случае отсутствия реакции модератора в секундах. (Время жизни кэша)
+PENDING_ADS_TTL: Final[int] = 120 #5*60*60
+
 
 # Teletone
 # Высвечивается в информации о сессии в tg клиенте
@@ -64,7 +68,6 @@ POSTGRES_DB: Final[str] = os.getenv("POSTGRES_DB")
 POSTGRES_USER: Final[str] = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD: Final[str] = os.getenv("POSTGRES_PASSWORD")
 # ENGINE.
-# "sqlite+aiosqlite:///./bot.db"
 DB_ENGINE =f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 # Models
 ## User
@@ -100,15 +103,17 @@ REDIS_CACHE_DB: Final[int] = 1
 REDIS_STORAGE = f"redis://{REDIS_HOST}:{REDIS_PORT}"
 REDIS_AIOGRAM_STORAGE: Final[str] = f"{REDIS_STORAGE}/{REDIS_AIOGRAM_DB}"
 REDIS_CASE_STORAGE: Final[str] = f"{REDIS_STORAGE}/{REDIS_CACHE_DB}"
+#Cach keys
+PENDING_ADS_KEY = 'pending_cat_ads'
 # Pyment.
 YOOKASSA_SHOP_ID: Final[str ]= os.getenv("YOOKASSA_SHOP_ID")
 YOOKASSA_SECRET_KEY: Final[str] = os.getenv("YOOKASSA_SECRET_KEY")
 # Media
-MEDIA: Final[str] = "media"
+MEDIA: Final[Path] = Path("media")
 MEDIA_ROOT: Final[Path] = ROOT_DIR / MEDIA
-IMAGES: Final[str] = "images"
+IMAGES: Final[Path] = Path("images")
 IMAGES_ROOT: Final[Path] = MEDIA_ROOT / IMAGES
-UPLOAD_DIR =  os.path.join(MEDIA, IMAGES)
+IMAGES_DIR =  MEDIA / IMAGES
 IMAGES_ROOT.mkdir(parents=True, exist_ok=True)
 # Logs
 LOGS_DIR: Final[Path] = ROOT_DIR / 'logs'
