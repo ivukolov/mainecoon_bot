@@ -4,6 +4,7 @@ import typing as t
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
+from sqlalchemy.exc import DataError, SQLAlchemyError
 
 from keyboards.lexicon import CatGenders
 from core.models import BaseModel
@@ -149,8 +150,11 @@ class Photo(BaseModel):
         "CatAd",
         secondary=cat_photos,
         back_populates="photos",
-        lazy='subquery'
+        lazy='subquery',
     )
+    @property
+    def photo_path(self) -> str:
+        return f'{settings}/{self.file_name}'
 
     def __str__(self):
         return f"Фото: tg_foto_id: {self.photo_id}"
@@ -200,11 +204,16 @@ class CatAd(BaseModel):
             is_publicated=False
     ) -> t.List['CatAd']:
         exclude_ids = exclude_ids or []
-        query = sa.select(cls).where(sa.and_(
-                sa.not_(cls.id.in_(exclude_ids)),
-                cls.is_moderated == is_moderated,
-                cls.is_publicated == is_publicated
-            )).options(
-            orm.selectinload(cls.author), orm.selectinload(cls.photos)).order_by(cls.created_at)
-        result = await session.execute(query)
-        return result.scalars().all()
+        try:
+            query = sa.select(cls).where(sa.and_(
+                    sa.not_(cls.id.in_(exclude_ids)),
+                    cls.is_moderated == is_moderated,
+                    cls.is_publicated == is_publicated
+                )).options(
+                orm.selectinload(cls.author), orm.selectinload(cls.photos)).order_by(cls.created_at)
+            result = await session.execute(query)
+            return result.scalars().all()
+        except DataError as e:
+            raise ValueError('Ошибка типа данных') from e
+        except SQLAlchemyError as e:
+            raise ValueError('Неизвестная ошибка при формирование списка объявлений') from e
