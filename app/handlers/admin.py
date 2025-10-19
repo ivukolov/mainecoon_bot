@@ -14,6 +14,7 @@ from keyboards.main_menu import blog_categories_kb, main_menu_kb
 from database import Post
 from keyboards.admin_menu import admin_tools_menu_kb, maike_interactives_kb
 from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractives
+from keyboards.ads import ModerateAd
 from database.users.models import User
 from utils.decorators import admin_required
 from mappers.telegram import TelegramMessageMapper, TelegramUserMapper
@@ -95,3 +96,9 @@ async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_c
         print(f"Ошибка: {e}")
         raise
     return await message.answer(f"Обновил информация о пользователях", reply_markup=admin_tools_menu_kb())
+
+
+@admin_router.callback_query(ModerateAd.filter())
+async def handle_blog_btn(callback_query: CallbackQuery, callback_data: ModerateAd, db: AsyncSession, tg_user: User):
+    print(callback_data.ads_id)
+    print(callback_data.action)
