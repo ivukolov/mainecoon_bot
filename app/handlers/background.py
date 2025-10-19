@@ -32,52 +32,13 @@ async def moderation_watcher(cat_ads_service: CatAdsService):
     """
     Фоновая задача для периодической проверки базы
     """
-    check_interval = 60  # проверка каждую минуту
-    admin_chat_id = settings.ADMIN_ID
     while True:
         try:
-            await check_pending_ads(cat_ads_service)
-            await asyncio.sleep(check_interval)
+            await cat_ads_service.check_pending_ads()
+            await asyncio.sleep(settings.CHECK_INTERVAL)
         except Exception as e:
+            await cat_ads_service.bot.send_message(
+                settings.ADMIN_ID, f'Ошибка обработки рекламных сообщений! {e}'[:1023]
+            )
             logging.error(f" Ошибка в moderation_watcher: %s", e)
-            await asyncio.sleep(check_interval)  # все равно ждем перед повторной попыткой
-
-
-async def check_pending_ads(cat_ads_service: 'CatAdsService'):
-    """
-    Проверяет наличие непромодерированных объявлений
-    """
-    redis_cache = cat_ads_service.cache_storage
-    try:
-        # Получаем объявления не прошедшие модерацию.
-        pending_cat_ads = await cat_ads_service.get_pending_moderation_ads()
-        if pending_cat_ads:
-            len_pending_ads = len(pending_cat_ads)
-            print(pending_cat_ads)
-            logging.info("Найдено %d объявления для модерации", len_pending_ads)
-
-            for ad in pending_cat_ads:
-                try:
-                    # Отправляем объявление модератору
-                    # await bot.send_message(
-                    #     settings.ADMIN_ID, f'Найдены посты в кол-ве: {len_pending_ads} - '
-                    #                        f'ожидающих модерацию'
-                    # )
-
-                    # # Помечаем как отправленное на модерацию
-                    # await cat_ads_service.mark_as_sent_to_moderation(ad.id)
-
-                    # Небольшая пауза между отправками
-                    await asyncio.sleep(1)
-
-                except Exception as e:
-                    logging.error(f" Ошибка отправки объявления %d: %s", {ad.id}, e)
-
-        else:
-            logging.info("Нет новых объявлений на модерации")
-            # Логируем только если есть что-то интересное
-            # if datetime.now().minute == 0:  # раз в час
-            #     logging.info("✅ Нет новых объявлений на модерации")
-
-    except Exception as e:
-        logging.error(f"Ошибка при проверке объявлений: %s ", e)
+            await asyncio.sleep(settings.CHECK_INTERVAL)  # все равно ждем перед повторной попыткой
