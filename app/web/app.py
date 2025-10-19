@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from sqladmin import Admin
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
 
 from utils.bot_utils import get_or_create_admin_user
 from config import settings
@@ -49,6 +50,7 @@ app = FastAPI(
         ),
     ]
 )
+app.mount(f"/{settings.MEDIA.name}", StaticFiles(directory=settings.MEDIA), name=settings.MEDIA.name)
 setup_admin_panel(app)
 app.include_router(router)
 
