@@ -67,9 +67,9 @@ class ActionButtons(Enum):
     BACK = Button(name="⬅️ Назад")
     NEXT_PAGE = Button(name="Вперед ▶️")
     PREV_PAGE = Button(name="◀️ Назад")
-    APPROVE = Button(name="✅ Одобрить")
-    REJECT = Button(name="❌ Отклонить")
-    BANE = Button(name="⛔ Забанить автора")
+    APPROVE = CallbackButton(name="✅ Одобрить", callback='approve')
+    REJECT = CallbackButton(name="❌ Отклонить", callback='reject')
+    BANE = CallbackButton(name="⛔ Забанить автора", callback='bane')
     MAIN_MENU = Button(name="Главное Меню")
     USER_JOIN = Button(name="Я вступил в группу")
 
