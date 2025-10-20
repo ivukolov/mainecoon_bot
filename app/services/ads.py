@@ -77,6 +77,8 @@ class CatAdsService:
             raise
         return photo_objects
 
+
+
     async def save_ad_message(self, ad_message: dict) -> CatAd:
         """Сохраняет объявление валидированное и полученное из FSM контекста"""
         # Инициализируем объект класса CatAdsSchema
@@ -111,27 +113,6 @@ class CatAdsService:
             logger.error('Внимание! Рекламное объявление: %s не сформировано', ad_message, exc_info=True)
             await self.session.rollback()
             raise
-
-    async def get_pending_moderation_ads_objects(
-            self,
-    ) -> t.Optional[t.List[CatAd]]:
-        """Функция получения списка модерируемых сообщений для отправки"""
-        # Получаем set из cache с уже отправленными объявлениями
-        pending_ads_cash: set = await self.cache_storage.fetch_set_with_int(settings.PENDING_ADS_KEY)
-        # Формируем список без отправленных объявлений
-        try:
-            pending_cat_ads = await CatAd.get_ads(self.session, exclude_ids=pending_ads_cash)
-        except Exception as e:
-            logger.error('Ошибка формирования списка рекламных объявлений %s', e)
-            pending_cat_ads = []
-        # Если есть новые объявления для отправки, то обновляем cache
-        if pending_cat_ads:
-            await self.cache_storage.put_set(
-                key=settings.PENDING_ADS_KEY,
-                data={cat_ads.id for cat_ads in pending_cat_ads},
-                ttl=settings.PENDING_ADS_TTL
-            )
-        return pending_cat_ads
 
     async def send_pending_moderation_ad(self, pending_cat_ads: CatAd) -> None:
         cat_ads_schema: CatAdsSchema = self.schema.model_validate(pending_cat_ads)
@@ -203,8 +184,14 @@ class CatAdsService:
         """
         try:
             # Получаем объявления не прошедшие модерацию.
-            pending_cat_ads = await self.get_pending_moderation_ads_objects()
+            pending_ads_cash: set = await self.cache_storage.fetch_set_with_int(settings.PENDING_ADS_KEY)
+            pending_cat_ads = await CatAd.get_ads(self.session, exclude_ids=pending_ads_cash,)
             if pending_cat_ads:
+                await self.cache_storage.put_set(
+                    key=settings.PENDING_ADS_KEY,
+                    data={cat_ads.id for cat_ads in pending_cat_ads},
+                    ttl=settings.PENDING_ADS_TTL
+                )
                 len_pending_ads = len(pending_cat_ads)
                 logger.info("Найдено %d объявления для модерации", len_pending_ads)
                 await self.bot.send_message(
