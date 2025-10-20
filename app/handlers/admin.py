@@ -13,7 +13,7 @@ from keyboards.main_menu import blog_categories_kb, main_menu_kb
 
 from database import Post
 from keyboards.admin_menu import admin_tools_menu_kb, maike_interactives_kb
-from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractives
+from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractives, ActionButtons
 from keyboards.ads import ModerateAd
 from database.users.models import User
 from utils.decorators import admin_required
@@ -99,6 +99,10 @@ async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_c
 
 
 @admin_router.callback_query(ModerateAd.filter())
-async def handle_blog_btn(callback_query: CallbackQuery, callback_data: ModerateAd, db: AsyncSession, tg_user: User):
-    print(callback_data.ads_id)
-    print(callback_data.action)
+async def handle_moderate_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, db: AsyncSession, tg_user: User):
+    if callback_data.action == ActionButtons.APPROVE.value.callback:
+        await callback_query.message.answer('Одобрено!')
+    if callback_data.action == ActionButtons.REJECT.value.callback:
+        await callback_query.message.answer('Возвращено пользователю на доработку!')
+    if callback_data.action == ActionButtons.BANE.value.callback:
+        await callback_query.message.answer('Пользователь забанен!')
