@@ -10,13 +10,14 @@ from aiogram.enums import ChatAction
 from aiogram.filters import CommandStart
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from keyboards.main_menu import blog_categories_kb, main_menu_kb
+from keyboards.main_menu import blog_categories_kb, main_menu_kb, cancel_kb
 
-from database import Post
+from database import Post, CatAd
 from keyboards.admin_menu import admin_tools_menu_kb, maike_interactives_kb
 from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractives, ActionButtons
 from keyboards.ads import ModerateAd
 from database.users.models import User
+from services.ads import CatAdsService
 from states.admin import AdminModerateStates
 from utils.decorators import admin_required
 from mappers.telegram import TelegramMessageMapper, TelegramUserMapper
@@ -102,18 +103,95 @@ async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_c
 
 @admin_router.callback_query(ModerateAd.filter())
 async def handle_moderate_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, state: FSMContext, tg_user: User):
+    """Модерированное рекламных сообщений"""
     if callback_data.action == ActionButtons.APPROVE.value.callback:
-        #await state.set_state(AdminModerateStates.approve)
-        await callback_query.message.answer('Одобрено! Введите заголовок рекламного сообщения')
+        await state.set_state(AdminModerateStates.approve)
+        await state.update_data(ads_id=callback_data.ads_id)
+        await callback_query.message.answer('Одобрено! Введите заголовок рекламного сообщения:', reply_markup=cancel_kb())
     if callback_data.action == ActionButtons.REJECT.value.callback:
-        #await state.set_state(AdminModerateStates.reject)
+        await state.set_state(AdminModerateStates.reject)
+        await state.update_data(ads_id=callback_data.ads_id)
         await callback_query.message.answer(
-            'Возвращено пользователю на доработку! Напишите комментарий о причине возврата'
+            'Возвращено пользователю на доработку! Напишите комментарий о причине возврата:', reply_markup=cancel_kb()
         )
     if callback_data.action == ActionButtons.BANE.value.callback:
-        #await state.set_state(AdminModerateStates.bane)
-        await callback_query.message.answer('Пользователь забанен!')
+        await state.set_state(AdminModerateStates.bane)
+        await state.update_data(author_id=callback_data.author_id)
+        await callback_query.message.answer('Укажите причину бана:', reply_markup=cancel_kb())
 
-@admin_router.message(AdminModerateStates.approve)
-async def ads_approve_logic(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
-    pass
+@admin_router.message(AdminModerateStates.approve, F.text != ActionButtons.CANCEL.value.name)
+async def ads_approve_state(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
+    """Обработка сообщения перед отправкой в группу"""
+    # Убрать повторяющиеся части!
+    comment = message.text
+    data = await state.get_data()
+    ads_id: int = data.get('ads_id')
+    try:
+        ads_to_moderate: CatAd = await CatAd.one_or_none(session=db, id=ads_id)
+        if not ads_to_moderate:
+            raise ValueError('Объявление id: %s не найдено! ', ads_id)
+        elif ads_to_moderate.is_moderated:
+            raise ValueError('Объявление id: %s уже прошло модерацию! ', ads_id)
+        else:
+            ads_to_moderate.is_moderated = True
+            ads_to_moderate.comment = comment
+            db.add(ads_to_moderate)
+            await db.flush()
+    except Exception as e:
+        logger.critical(
+            'Не получилось обновить статус сообщения прошедшего модерацию %s', e
+        )
+        return message.answer(f'Не удалось произвести модерацию объявления! {e}')
+    else:
+        await state.clear()
+        return await message.answer('Объявление в очереди на размещение!')
+
+@admin_router.message(AdminModerateStates.reject, F.text != ActionButtons.CANCEL.value.name)
+async def ads_reject_state(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
+    """Обработка не прошедшего модерацию сообщения"""
+    # Убрать повторяющиеся части!
+    comment = message.text
+    data = await state.get_data()
+    ads_id = data.get('ads_id')
+    try:
+        ads_to_moderate = await CatAd.one_or_none(session=db, id=ads_id)
+        if not ads_to_moderate:
+            raise ValueError('Объявление id: %s не найдено! ', ads_id)
+        elif ads_to_moderate.is_moderated:
+            raise ValueError('Объявление id: %s уже прошло модерацию! ', ads_id)
+        else:
+            ads_to_moderate.is_moderated = True
+            ads_to_moderate.comment = comment
+            ads_to_moderate.is_rejected = True
+            db.add(ads_to_moderate)
+            await db.flush()
+    except Exception as e:
+        logger.critical(
+            'Не получилось обновить статус сообщения - прошедшего модерацию %s', e
+        )
+    await state.clear()
+    await message.answer('Объявление в очереди на отправку!')
+
+@admin_router.message(AdminModerateStates.bane, F.text != ActionButtons.CANCEL.value.name)
+async def ads_bane_state(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
+    """Обработка не прошедшего модерацию сообщения"""
+    # Убрать повторяющиеся части!
+    comment = message.text
+    data = await state.get_data()
+    author_id = data.get('author_id')
+    try:
+        user = await User.one_or_none(session=db, id=author_id)
+        if not user:
+            raise ValueError(f'Пользователь с id: {author_id} не найден! ', )
+        user.is_banned = True
+        db.add(user)
+        await db.flush()
+        await message.bot.send_message(chat_id=author_id, text=f'Вы были забанены. Причина: {comment}')
+    except Exception as e:
+        logger.critical(
+            'Не получилось обновить статус сообщения - прошедшего модерацию %s', e
+        )
+        await message.answer(f'Ошибка. Не удалось забанить пользователя {author_id}')
+    else:
+        await message.answer('Пользователь забанен.')
+    return await state.clear()
