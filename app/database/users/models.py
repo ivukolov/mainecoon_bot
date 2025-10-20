@@ -94,6 +94,9 @@ class User(BaseModel):
     ads_publacated: Mapped[t.Optional[int]] = mapped_column(
         sa.SMALLINT, default=0, unique=False, comment='Количество рекламных сообщений отправленных пользователем'
     )
+    is_banned: Mapped[t.Optional[bool]] = mapped_column(
+        sa.Boolean, default=False, unique=False, comment='Пользователь забанен'
+    )
     role: Mapped[UserRole] = mapped_column(
         sa.Enum(UserRole),
         nullable=False,
@@ -128,10 +131,6 @@ class User(BaseModel):
         """Определяет, требуется ли пароль для текущей роли. (на случай добавления модераторов)"""
         return self.role in [UserRole.ADMIN, ]
 
-    # @property
-    # def invited_users_count(self) -> int:
-    #     """Для админ панели"""
-    #     return sum(1 for user in self.inviting_users if user.is_active)
 
     @property
     def invited_users_count(self) -> int:
