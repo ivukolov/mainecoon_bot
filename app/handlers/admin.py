@@ -1,6 +1,7 @@
 import typing as t
 from logging import getLogger
 
+from aiogram.fsm.context import FSMContext
 from telethon import TelegramClient
 from telethon import types
 from aiogram import Router, F, Bot
@@ -16,6 +17,7 @@ from keyboards.admin_menu import admin_tools_menu_kb, maike_interactives_kb
 from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractives, ActionButtons
 from keyboards.ads import ModerateAd
 from database.users.models import User
+from states.admin import AdminModerateStates
 from utils.decorators import admin_required
 from mappers.telegram import TelegramMessageMapper, TelegramUserMapper
 from schemas.dto import TelegramMessagesListDTO
@@ -99,10 +101,19 @@ async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_c
 
 
 @admin_router.callback_query(ModerateAd.filter())
-async def handle_moderate_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, db: AsyncSession, tg_user: User):
+async def handle_moderate_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, state: FSMContext, tg_user: User):
     if callback_data.action == ActionButtons.APPROVE.value.callback:
-        await callback_query.message.answer('Одобрено!')
+        #await state.set_state(AdminModerateStates.approve)
+        await callback_query.message.answer('Одобрено! Введите заголовок рекламного сообщения')
     if callback_data.action == ActionButtons.REJECT.value.callback:
-        await callback_query.message.answer('Возвращено пользователю на доработку!')
+        #await state.set_state(AdminModerateStates.reject)
+        await callback_query.message.answer(
+            'Возвращено пользователю на доработку! Напишите комментарий о причине возврата'
+        )
     if callback_data.action == ActionButtons.BANE.value.callback:
+        #await state.set_state(AdminModerateStates.bane)
         await callback_query.message.answer('Пользователь забанен!')
+
+@admin_router.message(AdminModerateStates.approve)
+async def ads_approve_logic(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
+    pass
