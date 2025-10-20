@@ -167,6 +167,7 @@ class CatAd(BaseModel):
     bot_message_title: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=True, comment='Сообщения от бота')
     is_publicated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Опубликовано в канале')
     is_moderated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Одобрено модератором')
+    is_rejected: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Отклонено модератором')
     author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('users.id'), index=True, nullable=False, )
     name: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=False, comment='Имя')
     gender: orm.Mapped[CatGenders] = orm.mapped_column(
@@ -203,7 +204,8 @@ class CatAd(BaseModel):
             exclude_ids: t.Optional[t.Collection[int]] = None,
             include_ids: t.Optional[t.Collection[int]] = None,
             is_moderated=False,
-            is_publicated=False
+            is_publicated=False,
+            is_rejected=False,
     ) -> t.List['CatAd']:
         conditions = []
         try:
@@ -213,18 +215,20 @@ class CatAd(BaseModel):
                 conditions.append(cls.id.in_(include_ids))
             if not conditions:
                 conditions.append(sa.true())
+            conditions.extend([
+                cls.is_moderated == is_moderated,
+                cls.is_publicated == is_publicated,
+                cls.is_rejected==is_rejected,
+            ])
             query = sa.select(cls).where(
-                sa.and_(
-                    *conditions,
-                    cls.id.in_(include_ids),
-                    cls.is_moderated == is_moderated,
-                    cls.is_publicated == is_publicated
-                )
+                sa.and_(*conditions,)
             ).options(
                 orm.selectinload(cls.author), orm.selectinload(cls.photos)).order_by(cls.created_at)
             result = await session.execute(query)
             return result.scalars().all()
         except DataError as e:
-            raise ValueError('Ошибка типа данных') from e
+            raise ValueError('Ошибка типа данных %s', e) from e
         except SQLAlchemyError as e:
-            raise ValueError('Неизвестная ошибка при формирование списка объявлений') from e
+            raise ValueError('Ошибка выборки данных %s', e) from e
+
+
