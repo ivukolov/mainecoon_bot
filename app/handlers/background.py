@@ -40,5 +40,5 @@ async def moderation_watcher(cat_ads_service: CatAdsService):
             await cat_ads_service.bot.send_message(
                 settings.ADMIN_ID, f'Ошибка обработки рекламных сообщений! {e}'[:1023]
             )
-            logging.error(f" Ошибка в moderation_watcher: %s", e)
+            logging.critical(f" Ошибка в moderation_watcher: %s", e)
             await asyncio.sleep(settings.CHECK_INTERVAL)  # все равно ждем перед повторной попыткой
