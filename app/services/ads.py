@@ -122,10 +122,9 @@ class CatAdsService:
         await self.bot.send_message(
             settings.ADMIN_ID,
             'Выберите действие:',
-            reply_markup=moderate_ad_kb(ads_id=pending_cat_ads.id)
+            reply_markup=moderate_ad_kb(ads_id=pending_cat_ads.id, author_id=cat_ads_schema.author_id)
         )
         return
-
 
 
     def handle_mediagroup(self, foto_messages: t.Collection[Message], **kwargs):
@@ -202,10 +201,8 @@ class CatAdsService:
                     try:
                         #Отправляем объявление модератору
                         await self.send_pending_moderation_ad(pending_cat_ads=ad)
-
                         # Небольшая пауза между отправками
                         await asyncio.sleep(1)
-
                     except Exception as e:
                         logger.error(f" Ошибка отправки объявления %d: %s", {ad.id}, e)
                         raise
