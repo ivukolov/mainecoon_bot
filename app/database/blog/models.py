@@ -10,7 +10,6 @@ from keyboards.lexicon import CatGenders
 from core.models import BaseModel
 from config import settings
 
-
 post_tags = sa.Table(
     'post_tags', BaseModel.metadata,
     sa.Column('post_id', sa.Integer, sa.ForeignKey('posts.id'), primary_key=True),
@@ -126,6 +125,7 @@ class Post(BaseModel):
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
+
 cat_photos = sa.Table(
     'cat_photos',
     BaseModel.metadata,
@@ -142,7 +142,7 @@ class Photo(BaseModel):
     photo_id: orm.Mapped[str] = orm.mapped_column(sa.String(100), nullable=False, comment='id фотографии в телегам')
     file_name: orm.Mapped[str] = orm.mapped_column(sa.String(100), nullable=True)
     file_path: orm.Mapped[str] = orm.mapped_column(sa.String(300), nullable=True)
-    file_size : orm.Mapped[int] = orm.mapped_column(sa.BIGINT,default=0)
+    file_size: orm.Mapped[int] = orm.mapped_column(sa.BIGINT, default=0)
     sort_order: orm.Mapped[int] = orm.mapped_column(sa.SMALLINT, default=0)
     is_primary: orm.Mapped[bool] = orm.mapped_column(sa.Boolean, default=False)
 
@@ -152,6 +152,7 @@ class Photo(BaseModel):
         back_populates="photos",
         lazy='subquery',
     )
+
     @property
     def photo_path(self) -> str:
         return f'{settings}/{self.file_name}'
@@ -166,7 +167,7 @@ class CatAd(BaseModel):
     bot_message_title: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=True, comment='Сообщения от бота')
     is_publicated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Опубликовано в канале')
     is_moderated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Одобрено модератором')
-    author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('users.id'), index=True, nullable=False,)
+    author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('users.id'), index=True, nullable=False, )
     name: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=False, comment='Имя')
     gender: orm.Mapped[CatGenders] = orm.mapped_column(
         sa.Enum(CatGenders),
@@ -199,17 +200,27 @@ class CatAd(BaseModel):
     async def get_ads(
             cls,
             session,
-            exclude_ids: t.Optional[t.Collection[int]]=None,
+            exclude_ids: t.Optional[t.Collection[int]] = None,
+            include_ids: t.Optional[t.Collection[int]] = None,
             is_moderated=False,
             is_publicated=False
     ) -> t.List['CatAd']:
-        exclude_ids = exclude_ids or []
+        conditions = []
         try:
-            query = sa.select(cls).where(sa.and_(
-                    sa.not_(cls.id.in_(exclude_ids)),
+            if exclude_ids:
+                conditions.append(sa.not_(cls.id.in_(exclude_ids)))
+            if include_ids:
+                conditions.append(cls.id.in_(include_ids))
+            if not conditions:
+                conditions.append(sa.true())
+            query = sa.select(cls).where(
+                sa.and_(
+                    *conditions,
+                    cls.id.in_(include_ids),
                     cls.is_moderated == is_moderated,
                     cls.is_publicated == is_publicated
-                )).options(
+                )
+            ).options(
                 orm.selectinload(cls.author), orm.selectinload(cls.photos)).order_by(cls.created_at)
             result = await session.execute(query)
             return result.scalars().all()
