@@ -6,30 +6,31 @@ from keyboards.lexicon import ActionButtons, AdsMenu, CatGenders, AdsUserApprove
 
 class ModerateAd(CallbackData, prefix="moderate_ads"):
     ads_id: int
+    author_id:int
     action: str
 
-def moderate_ad_kb(ads_id: int) -> InlineKeyboardMarkup:
+def moderate_ad_kb(ads_id: int, author_id:int) -> InlineKeyboardMarkup:
     """Кнопки для модерации рекламных сообщений"""
     buttons = [
         [
             InlineKeyboardButton(
                 text=ActionButtons.APPROVE.value.name,
                 callback_data=ModerateAd(
-                    ads_id=ads_id, action=ActionButtons.APPROVE.value.callback
+                    ads_id=ads_id, action=ActionButtons.APPROVE.value.callback, author_id=author_id
                 ).pack())
         ],
         [
             InlineKeyboardButton(
                 text=ActionButtons.REJECT.value.name,
                 callback_data=ModerateAd(
-                    ads_id=ads_id, action=ActionButtons.REJECT.value.callback
+                    ads_id=ads_id, action=ActionButtons.REJECT.value.callback, author_id=author_id
                 ).pack())
         ],
         [
             InlineKeyboardButton(
                 text=ActionButtons.BANE.value.name,
                 callback_data=ModerateAd(
-                    ads_id=ads_id, action=ActionButtons.BANE.value.callback
+                    ads_id=ads_id, action=ActionButtons.BANE.value.callback, author_id=author_id
                 ).pack())
         ]
     ]
