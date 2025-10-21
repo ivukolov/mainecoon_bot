@@ -5,7 +5,7 @@ from logging import getLogger
 
 from aiogram import Bot
 from aiogram.types import InputMediaPhoto, Message, PhotoSize
-from aiopath import Path as AioPath
+from aiopath import AsyncPath
 from requests import session
 from sqlalchemy.ext.asyncio import AsyncSession
 import sqlalchemy as sa
@@ -105,7 +105,7 @@ class CatAdsService:
             photos = cat_ads_schema.photos
             for photo in photos:
                 if photo and photo.file_path:
-                    foto_for_delete = AioPath(photo.file_path)
+                    foto_for_delete = AsyncPath(photo.file_path)
                     try:
                         await foto_for_delete.unlink()
                     except FileNotFoundError as e:
@@ -125,6 +125,21 @@ class CatAdsService:
             reply_markup=moderate_ad_kb(ads_id=pending_cat_ads.id, author_id=cat_ads_schema.author_id)
         )
         return
+
+    async def handle_moderation_states(self, ads_id: int, comment, is_moderated=True, is_rejected=False, ):
+        """Обработка сообщений прошедших модерацию"""
+        ads_to_moderate = await self.model.one_or_none(session=self.session, id=ads_id)
+        if not ads_to_moderate:
+            raise ValueError('Объявление id: %s не найдено! ', ads_id)
+        elif ads_to_moderate.is_moderated:
+            raise ValueError('Объявление id: %s уже прошло модерацию! ', ads_id)
+        else:
+            ads_to_moderate.is_moderated = is_moderated
+            ads_to_moderate.comment = comment
+            if is_rejected:
+                ads_to_moderate.is_rejected = is_rejected
+            self.session.add(ads_to_moderate)
+            await self.session.flush()
 
 
     def handle_mediagroup(self, foto_messages: t.Collection[Message], **kwargs):
@@ -179,7 +194,7 @@ class CatAdsService:
 
     async def check_pending_ads(self):
         """
-        Проверяет наличие непромодерированных объявлений
+        Проверяет наличие объявлений не прошедших модерацию.
         """
         try:
             # Получаем объявления не прошедшие модерацию.
