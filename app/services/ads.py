@@ -127,6 +127,7 @@ class CatAdsService:
             ads_to_moderate.comment = comment
             self.session.add(ads_to_moderate)
             await self.session.flush()
+            await self.cache_storage.rem_set(settings.PENDING_ADS_KEY, ads_id)
 
     def handle_mediagroup(self, foto_messages: t.Collection[Message], **kwargs):
         """Обрабатываем фотографии из медиасобщения и добавляем в схему"""
