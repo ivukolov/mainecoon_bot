@@ -2,14 +2,11 @@ import logging
 import logging.config
 from logging import getLogger
 
-import uvicorn
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.exceptions import TelegramServerError, TelegramNotFound
-from fastapi import FastAPI
-from sqladmin import Admin
 
 from utils.bot_utils import bot_send_message
 from database.db import session_factory, get_db_session_directly
