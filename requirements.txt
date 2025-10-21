@@ -1,5 +1,5 @@
 aiofile==3.9.0
-aiofiles==23.1.0
+aiofiles==24.1.0
 aiogram==3.21.0
 aiogram-media-group==0.5.1
 aiohappyeyeballs==2.6.1
@@ -9,7 +9,6 @@ aiopath==0.6.11
 aioredis==2.0.1
 aiosignal==1.4.0
 aiosqlite==0.21.0
-aiotempfile==0.5.5
 alembic==1.16.4
 annotated-types==0.7.0
 anyio==3.7.1
