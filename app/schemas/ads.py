@@ -135,9 +135,9 @@ class CatAdsSchema(BaseSchema):
                 raise ValueError(f'Неверный формат даты')
 
     def get_caption(self) -> str:
-        header = self.bot_message_title
+        header = self.bot_message_title or ''
         return (
-        f"{header}\n\n"
+        f"{header}\n"
         f"🐱 Имя: {self.name}\n"
         f"⚧ Пол: {self.gender}\n"
         f"📅 Дата рождения: {self.birth_date}\n"
