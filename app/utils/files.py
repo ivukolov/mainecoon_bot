@@ -1,26 +1,26 @@
 from io import BytesIO
 from pathlib import Path
+from aiopath import AsyncPath
 from logging import getLogger
 from typing import Any, BinaryIO, Union, Optional, Collection, Dict, List, Tuple
 import os
 
 import aiofiles
 import aiofiles.os as async_os
-from aiopath import AsyncPath, AsyncPosixPath
 
 from config import settings
 
 logger = getLogger(__name__)
 
 
-def get_images_paths(directory: str) -> tuple[Path, Path]:
+def get_images_paths(directory: str | Path) -> tuple[str, Path]:
     """
     Формирует локальный  и  глобальный путь для сохранения файла - на основе id пользователя
     Returns:
-        Tuple(local_path, global_path)
+        Tuple(local_path(posix:str), global_path: Path)
     """
     local_path = (settings.IMAGES_DIR / directory).as_posix()
-    global_path = Path(settings.IMAGES_ROOT) / directory
+    global_path = settings.IMAGES_ROOT / directory
     return local_path, global_path
 
 
@@ -38,7 +38,8 @@ async def save_file(file_path: str | Path, file_bytes: Union[bytes, BytesIO, Bin
         if isinstance(file_bytes, (BytesIO, BinaryIO)):
             file_bytes = file_bytes.getvalue()
         directory = AsyncPath(file_path).parent
-        await directory.mkdir(exist_ok=True, parents=True)
+        await AsyncPath(directory).mkdir(parents=True, exist_ok=True)
+        logger.info(f'Сохраняю файл {file_path}')
         async with aiofiles.open(file_path, 'wb') as f:
             await f.write(file_bytes)
         return file_path
@@ -81,10 +82,10 @@ async def atomic_save_files(
     """
     if not files:
         return False
-    saved_files: List[Path, ...] | List = [] # Стэк сохранённых файлов
+    saved_files: List[AsyncPath, ...] | List = [] # Стэк сохранённых файлов
     try:
         for file_path, content in files.items():
-            file_path = Path(file_path)
+            file_path = AsyncPath(file_path)
             await save_file(file_path, content)
             saved_files.append(file_path)
         return True
