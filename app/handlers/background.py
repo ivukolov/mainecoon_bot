@@ -4,7 +4,7 @@ from datetime import datetime
 import logging
 
 from config import settings
-from database.db import get_db_session, get_db_session_directly
+from database.db import get_db_session, get_db_session_directly, session_factory
 from services.ads import CatAdsService
 from utils.cache import RedisCache
 
@@ -20,7 +20,7 @@ async def start_moderation_watcher(bot: Bot):
     """
     logging.info("Модерационный вотчер запущен")
 
-    async with get_db_session() as session:
+    async with session_factory() as session:
         async with RedisCache() as redis_cache:
             cat_ads_service = CatAdsService(session, cache_storage=redis_cache, bot=bot)
             asyncio.create_task(
@@ -35,6 +35,7 @@ async def moderation_watcher(cat_ads_service: CatAdsService):
     while True:
         try:
             await cat_ads_service.check_pending_ads()
+            await cat_ads_service.session.commit()
             await asyncio.sleep(settings.CHECK_INTERVAL)
         except Exception as e:
             await cat_ads_service.bot.send_message(
