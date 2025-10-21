@@ -2,6 +2,7 @@ import typing as t
 from logging import getLogger
 
 from aiogram.fsm.context import FSMContext
+from sqlalchemy import delete
 from telethon import TelegramClient
 from telethon import types
 from aiogram import Router, F, Bot
@@ -10,6 +11,7 @@ from aiogram.enums import ChatAction
 from aiogram.filters import CommandStart
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database.blog.enums import AdStatus
 from keyboards.main_menu import blog_categories_kb, main_menu_kb, cancel_kb
 
 from database import Post, CatAd
@@ -123,13 +125,15 @@ async def handle_moderating_ads_data(callback_query: CallbackQuery, callback_dat
 async def ads_approve_state(
         message: Message, state: FSMContext, tg_user: User, cat_ads_service: CatAdsService
 ):
-    """Обработка сообщения перед отправкой в группу"""
+    """Обработка прошедшего модерацию"""
     # Убрать повторяющиеся части!
     comment = message.text
     data = await state.get_data()
     ads_id: int = data.get('ads_id')
     try:
-        await cat_ads_service.handle_moderation_states(ads_id=ads_id, comment=comment,)
+        await cat_ads_service.moderate_ad_message(
+            ads_id=ads_id, comment=comment, status=AdStatus.APPROVED
+        )
     except Exception as e:
         logger.critical(
             'Не получилось обновить статус сообщения прошедшего модерацию %s', e
@@ -149,7 +153,9 @@ async def ads_reject_state(
     data = await state.get_data()
     ads_id = data.get('ads_id')
     try:
-        await cat_ads_service.handle_moderation_states(ads_id=ads_id, comment=comment, is_rejected=True)
+        await cat_ads_service.moderate_ad_message(
+            ads_id=ads_id, comment=comment, status=AdStatus.REJECTED
+        )
     except Exception as e:
         logger.critical(
             'Не получилось обновить статус сообщения - прошедшего модерацию %s', e
@@ -160,23 +166,28 @@ async def ads_reject_state(
 
 @admin_router.message(AdminModerateStates.bane, F.text != ActionButtons.CANCEL.value.name)
 async def ads_bane_state(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
-    """Обработка не прошедшего модерацию сообщения"""
+    """Обработка бана пользователя и удаления рекламного сообщения"""
     # Убрать повторяющиеся части!
     comment = message.text
     data = await state.get_data()
     author_id = data.get('author_id')
+    ads_id = data.get('ads_id')
     try:
         user = await User.one_or_none(session=db, id=author_id)
         if not user:
             raise ValueError(f'Пользователь с id: {author_id} не найден! ', )
         user.is_banned = True
         db.add(user)
+        try:
+            await db.execute(delete(CatAd).where(CatAd.id == ads_id))
+        except Exception as e:
+            raise ValueError('Не смог удалить пост забаненного пользователя {}'.format(e))
         await db.flush()
     except Exception as e:
         logger.critical(
-            'Не получилось обновить статус забаненного пользователя %s', e
+            'Ошибка во время добавления пользователя в бан {}'.format(e)
         )
-        await message.answer(f'Ошибка. Не удалось забанить пользователя {author_id}')
+        await message.answer('Ошибка во время добавления пользователя в бан {}'.format(e))
     else:
         try:
             await message.bot.send_message(chat_id=author_id, text=f'Вы были забанены. Причина: {comment}')
