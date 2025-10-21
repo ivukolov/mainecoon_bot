@@ -3,9 +3,11 @@ import typing
 import typing as t
 from logging import getLogger
 
+import aiofiles
+from aiofiles import os as aio_os
 from aiogram import Bot
 from aiogram.types import InputMediaPhoto, Message, PhotoSize
-from aiopath import AsyncPath
+# from aiopath import AsyncPath
 from requests import session
 from sqlalchemy.ext.asyncio import AsyncSession
 import sqlalchemy as sa
@@ -13,10 +15,11 @@ import sqlalchemy.orm as so
 
 from config import settings
 from database import User
+from database.blog.enums import AdStatus
 from database.blog.models import CatAd, Photo
 from keyboards.ads import moderate_ad_kb
 from schemas.ads import CatAdsSchema, PhotoSchema
-from utils.bot_utils import bot_save_photos_from_photo_id_list
+from utils.bot_utils import bot_save_photos_from_photo_id_list, get_moderator_id_from_pool
 from utils.cache import RedisCache
 
 logger = getLogger(__name__)
@@ -77,8 +80,6 @@ class CatAdsService:
             raise
         return photo_objects
 
-
-
     async def save_ad_message(self, ad_message: dict) -> CatAd:
         """Сохраняет объявление валидированное и полученное из FSM контекста"""
         # Инициализируем объект класса CatAdsSchema
@@ -105,42 +106,27 @@ class CatAdsService:
             photos = cat_ads_schema.photos
             for photo in photos:
                 if photo and photo.file_path:
-                    foto_for_delete = AsyncPath(photo.file_path)
+                    foto_for_delete = photo.file_path
                     try:
-                        await foto_for_delete.unlink()
+                        await aio_os.remove(foto_for_delete)
                     except FileNotFoundError as e:
                         logger.error('Во время очистки фотографий возникла ошибка %s', e)
             logger.error('Внимание! Рекламное объявление: %s не сформировано', ad_message, exc_info=True)
             await self.session.rollback()
             raise
 
-    async def send_pending_moderation_ad(self, pending_cat_ads: CatAd) -> None:
-        cat_ads_schema: CatAdsSchema = self.schema.model_validate(pending_cat_ads)
-        media = self.get_media_message_from_schema(cat_ads_schema)
-        # Отправляем объявление модератору
-        await self.bot.send_media_group(settings.ADMIN_ID, media)
-        await self.bot.send_message(
-            settings.ADMIN_ID,
-            'Выберите действие:',
-            reply_markup=moderate_ad_kb(ads_id=pending_cat_ads.id, author_id=cat_ads_schema.author_id)
-        )
-        return
-
-    async def handle_moderation_states(self, ads_id: int, comment, is_moderated=True, is_rejected=False, ):
-        """Обработка сообщений прошедших модерацию"""
-        ads_to_moderate = await self.model.one_or_none(session=self.session, id=ads_id)
+    async def moderate_ad_message(self, ads_id: int, comment, status: AdStatus):
+        """Модерация сообщений"""
+        ads_to_moderate: CatAd = await self.model.one_or_none(session=self.session, id=ads_id)
         if not ads_to_moderate:
             raise ValueError('Объявление id: %s не найдено! ', ads_id)
-        elif ads_to_moderate.is_moderated:
+        elif ads_to_moderate.status in AdStatus.is_processed():
             raise ValueError('Объявление id: %s уже прошло модерацию! ', ads_id)
         else:
-            ads_to_moderate.is_moderated = is_moderated
+            ads_to_moderate.status = status
             ads_to_moderate.comment = comment
-            if is_rejected:
-                ads_to_moderate.is_rejected = is_rejected
             self.session.add(ads_to_moderate)
             await self.session.flush()
-
 
     def handle_mediagroup(self, foto_messages: t.Collection[Message], **kwargs):
         """Обрабатываем фотографии из медиасобщения и добавляем в схему"""
@@ -192,30 +178,88 @@ class CatAdsService:
                 media.append(input_media)
         return media
 
+    async def send_pending_ad(
+            self,
+            pending_cat_ad: CatAd,
+            user_id: int,
+            info_message: str | None = None,
+            reply_markup = None
+    ) -> None:
+        cat_ads_schema: CatAdsSchema = self.schema.model_validate(pending_cat_ad)
+        media = self.get_media_message_from_schema(cat_ads_schema)
+        # Отправляем объявление пользователю
+        await self.bot.send_media_group(user_id, media)
+        if info_message:
+            await self.bot.send_message(
+                user_id,
+                info_message,
+                reply_markup=reply_markup
+            )
+            return
+
     async def check_pending_ads(self):
         """
-        Проверяет наличие объявлений не прошедших модерацию.
+        Проверяет наличие объявлений для модерации.
         """
         try:
-            # Получаем объявления не прошедшие модерацию.
+            # Получаем объявления для модерации.
+            # Получаем id объявлений из кэша для исключения их из выборки
             pending_ads_cash: set = await self.cache_storage.fetch_set_with_int(settings.PENDING_ADS_KEY)
-            pending_cat_ads = await CatAd.get_ads(self.session, exclude_ids=pending_ads_cash,)
+            # Производим выборку объявлений
+            # Добавить удаление из кэша сообщений прошедших модерацию!!!!
+            pending_cat_ads = await self.model.get_ads(self.session, exclude_ids=pending_ads_cash)
             if pending_cat_ads:
-                await self.cache_storage.put_set(
-                    key=settings.PENDING_ADS_KEY,
-                    data={cat_ads.id for cat_ads in pending_cat_ads},
-                    ttl=settings.PENDING_ADS_TTL
-                )
-                len_pending_ads = len(pending_cat_ads)
-                logger.info("Найдено %d объявления для модерации", len_pending_ads)
-                await self.bot.send_message(
-                    settings.ADMIN_ID, f'Найдены посты в кол-ве: {len_pending_ads} - '
-                                       f'ожидающих модерацию',
-                )
                 for ad in pending_cat_ads:
                     try:
-                        #Отправляем объявление модератору
-                        await self.send_pending_moderation_ad(pending_cat_ads=ad)
+                        if ad.status == AdStatus.NEW_BORN:
+                            moderator_id = await get_moderator_id_from_pool()
+                            len_pending_ads = len(pending_cat_ads)
+                            logger.info(f"Найдено {len_pending_ads} объявления для модерации")
+                            await self.bot.send_message(
+                                moderator_id, f'Найдены посты в кол-ве: {len_pending_ads} - '
+                                              f'ожидающих модерацию',
+                            )
+                            await self.send_pending_ad(
+                                pending_cat_ad=ad,
+                                user_id=moderator_id,
+                                info_message='Выберите действие:',
+                                reply_markup=moderate_ad_kb(
+                                    ads_id=ad.id, author_id=ad.author_id
+                                )
+                            )
+                            try:
+                                await self.cache_storage.put_set(
+                                    key=settings.PENDING_ADS_KEY,
+                                    data={cat_ads.id for cat_ads in pending_cat_ads},
+                                    ttl=settings.PENDING_ADS_TTL
+                                )
+                            except Exception as e:
+                                logger.warning('Не удалось добавить в кэш рекламные объявления %s', e)
+                        else:
+                            # отправка рекламного поста - отклонённого модератором!
+                            if ad.status == AdStatus.REJECTED:
+                                await self.send_pending_ad(
+                                    pending_cat_ad=ad,
+                                    user_id=ad.author_id,
+                                    info_message='Ваше сообщение было отклонено модератором.')
+                                logger.info(f'Сообщение {ad.id} было отклонено модератором!')
+                                try:
+                                    await self.session.delete(ad)
+                                except Exception as e:
+                                    logger.error(
+                                        'Во время удаления сообщения не прошедшего модерацию '
+                                        'произошел сбой {}'.format(e))
+                            if ad.status == AdStatus.APPROVED:  # отправка рекламного поста - одобренного модератором!
+                                # Отправка сообщения в группу
+                                await self.send_pending_ad(
+                                    pending_cat_ad=ad,
+                                    user_id=ad.author_id,
+                                    info_message='Ваше сообщение было одобрено модератором.')
+                                ad.status = AdStatus.PUBLICATED
+                                logger.info('Размещено сообщение в котоборохолке !')
+                                self.session.add(ad)
+                                await self.session.commit()
+                        # отправка рекламного поста - ещё не просмотренного модератором
                         # Небольшая пауза между отправками
                         await asyncio.sleep(1)
                     except Exception as e:
