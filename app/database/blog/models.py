@@ -1,14 +1,22 @@
+import asyncio
 from datetime import datetime, date
 from decimal import Decimal
 import typing as t
+from logging import getLogger
 
+from aiopath import AsyncPath
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
+from sqlalchemy import event
 from sqlalchemy.exc import DataError, SQLAlchemyError
 
+from database.blog.enums import AdStatus
 from keyboards.lexicon import CatGenders
 from core.models import BaseModel
 from config import settings
+
+logger = getLogger(__name__)
+
 
 post_tags = sa.Table(
     'post_tags', BaseModel.metadata,
@@ -165,9 +173,17 @@ class CatAd(BaseModel):
     __tablename__ = "cat_ads"
 
     bot_message_title: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=True, comment='Сообщения от бота')
-    is_publicated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Опубликовано в канале')
-    is_moderated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Одобрено модератором')
-    is_rejected: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Отклонено модератором')
+    status: orm.Mapped[AdStatus] = orm.mapped_column(
+        sa.Enum(AdStatus),
+        nullable=False,
+        default=AdStatus.NEW_BORN,
+        server_default=AdStatus.NEW_BORN.value,
+        unique=False,
+        comment='Статус объявления'
+    )
+    # is_publicated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Опубликовано в канале')
+    # is_moderated: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Одобрено модератором')
+    # is_rejected: orm.Mapped[bool] = orm.mapped_column(default=False, comment='Отклонено модератором')
     author_id: orm.Mapped[int] = orm.mapped_column(sa.ForeignKey('users.id'), index=True, nullable=False, )
     name: orm.Mapped[str] = orm.mapped_column(sa.String(200), nullable=False, comment='Имя')
     gender: orm.Mapped[CatGenders] = orm.mapped_column(
@@ -192,10 +208,21 @@ class CatAd(BaseModel):
     author: orm.Mapped['User'] = orm.relationship("User", back_populates="cat_ads", lazy='subquery')
 
     def __str__(self):
-        return f"AD: автор {self.author_id}, кот:{self.name}, цена: {self.price} прошло модерацию: {self.is_moderated}"
+        return f"AD: автор {self.author_id}, кот:{self.name}, цена: {self.price} статус: {self.status}"
 
     def __repr__(self):
         return self.__str__()
+
+    async def before_delete(self):
+        """Асинхронный метод, вызываемый перед удалением"""
+        await self.unlink_photos()
+
+    async def unlink_photos(self):
+        for foto in self.photos:
+            file_path: AsyncPath = AsyncPath(foto.photo_path)
+            if file_path.exists():
+                await file_path.unlink()
+                logger.debug("Файл: %s удалён.", file_path)
 
     @classmethod
     async def get_ads(
@@ -203,9 +230,7 @@ class CatAd(BaseModel):
             session,
             exclude_ids: t.Optional[t.Collection[int]] = None,
             include_ids: t.Optional[t.Collection[int]] = None,
-            is_moderated=False,
-            is_publicated=False,
-            is_rejected=False,
+            exclude_sataus: tuple = AdStatus.PUBLICATED
     ) -> t.List['CatAd']:
         conditions = []
         try:
@@ -216,9 +241,7 @@ class CatAd(BaseModel):
             if not conditions:
                 conditions.append(sa.true())
             conditions.extend([
-                cls.is_moderated == is_moderated,
-                cls.is_publicated == is_publicated,
-                cls.is_rejected==is_rejected,
+                cls.status != exclude_sataus
             ])
             query = sa.select(cls).where(
                 sa.and_(*conditions,)
@@ -231,4 +254,8 @@ class CatAd(BaseModel):
         except SQLAlchemyError as e:
             raise ValueError('Ошибка выборки данных %s', e) from e
 
-
+# Хук для удаления фотографий при удалении объявления
+@event.listens_for(CatAd, 'before_delete')
+def receive_before_delete(mapper, connection, target):
+    """Синхронный хук, который запускает асинхронный метод"""
+    asyncio.create_task(target.before_delete())
