@@ -145,11 +145,11 @@ class CatAdAdmin(ColumnLabelsGeneratorMixin, ModelView, model=CatAd):
 class PhotoAdmin(ColumnLabelsGeneratorMixin, ModelView, model=Photo):
     name = "Фотография"
     name_plural = "Фотографии"
-    column_list = ['id', ' photo_id', 'file_name', 'file_path', 'file_size', 'sort_order', 'is_primary', 'image_path']
+    column_list = ['id', 'photo_id', 'file_name', 'file_path', 'file_size', 'sort_order', 'is_primary', 'image_path']
     can_export = True
 
-    # column_formatters = {
-    #     Photo.file_path: lambda m, a: Markup(
-    #         f'<img src="/media/images/1382354642/04e0b54c-4116-5f83-900a-8672c361d673.jpg" height="60" />'
-    #     ) if m.file_name else "No image"
-    # }
+    column_formatters = {
+        Photo.file_path: lambda m, a: Markup(
+            f'<img src="{m.file_path}" height="60" />'
+        ) if m.file_path else "Фото не сохранено"
+    }
