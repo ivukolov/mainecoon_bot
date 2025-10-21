@@ -1,12 +1,12 @@
-from aiopath import Path, AsyncPosixPath
 from io import BytesIO
+from pathlib import Path
 from logging import getLogger
-from asynctempfile import TemporaryDirectory
 from typing import Any, BinaryIO, Union, Optional, Collection, Dict, List, Tuple
 import os
 
 import aiofiles
 import aiofiles.os as async_os
+from aiopath import AsyncPath, AsyncPosixPath
 
 from config import settings
 
@@ -37,8 +37,8 @@ async def save_file(file_path: str | Path, file_bytes: Union[bytes, BytesIO, Bin
     try:
         if isinstance(file_bytes, (BytesIO, BinaryIO)):
             file_bytes = file_bytes.getvalue()
-        directory = Path(file_path).parent
-        await async_os.makedirs(directory, exist_ok=True)
+        directory = AsyncPath(file_path).parent
+        await directory.mkdir(exist_ok=True, parents=True)
         async with aiofiles.open(file_path, 'wb') as f:
             await f.write(file_bytes)
         return file_path
