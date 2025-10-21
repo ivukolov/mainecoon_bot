@@ -227,7 +227,8 @@ async def ads_process_photo(message: Message, state: FSMContext, cat_ads_service
 
 
 @ads_router.message(CatForm.approve)
-async def ads_approve(message: Message, state: FSMContext, tg_user: User, cat_ads_service: CatAdsService):
+async def ads_prepare_to_approve(message: Message, state: FSMContext, tg_user: User, cat_ads_service: CatAdsService):
+    """Сохранение информации о рекламном посте"""
     if message.text == AdsUserApprove.TO_MODERATE.value.name:
         data = await state.get_data()
         try:
