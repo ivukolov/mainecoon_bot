@@ -49,6 +49,10 @@ class RedisCache:
         """Получение set данных"""
         return await self.client.smembers(key)
 
+    async def rem_set(self, key, *args) -> t.Any:
+        """Удаляет значение из множества"""
+        return await self.client.srem(key, *args)
+
     async def fetch_set_with_int(self, key) -> set[int]:
         """преобразовывает все значения из set в int
         Arguments:
