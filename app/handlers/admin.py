@@ -32,6 +32,7 @@ logger.info(f'Инициализируем роутер {__name__}')
 
 admin_router = Router()
 
+
 @admin_router.message(F.text == MainMenu.ADMIN.value.name)
 @admin_required
 async def admin_menu(message: Message, tg_user: User):
@@ -48,10 +49,6 @@ async def admin_menu(message: Message, tg_user: User):
     )
     await message.answer(response, reply_markup=admin_tools_menu_kb())
 
-# @admin_router.callback_query(F.data == AdminInteractives.QUIZ.value.callback)
-# @admin_required
-# async def admin_menu_make_interactives(callback_query: CallbackQuery, tg_user: User):
-#     return callback_query.message.answer('123')
 
 @admin_router.message(F.text == AdminMenu.ADD_INTERACTIVES.value.name)
 @admin_required
@@ -93,7 +90,7 @@ async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_c
         )
     parsed_users = [u async for u in teleton_client.iter_participants(channel, limit=None)]
     users_dto = TelegramUserMapper.get_users_from_telethon_raw_data(parsed_users)
-    users_list= users_dto.get_model_dump_list()
+    users_list = users_dto.get_model_dump_list()
     try:
         await User.on_conflict_do_update_users(session=db, users_dict_list=users_list)
     except Exception as e:
@@ -104,12 +101,14 @@ async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_c
 
 
 @admin_router.callback_query(ModerateAd.filter())
-async def handle_moderating_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, state: FSMContext, tg_user: User):
+async def handle_moderating_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, state: FSMContext,
+                                     tg_user: User):
     """Модерированное рекламных сообщений"""
     if callback_data.action == ActionButtons.APPROVE.value.callback:
         await state.set_state(AdminModerateStates.approve)
         await state.update_data(ads_id=callback_data.ads_id)
-        await callback_query.message.answer('Одобрено! Введите заголовок рекламного сообщения:', reply_markup=cancel_kb())
+        await callback_query.message.answer('Одобрено! Введите заголовок рекламного сообщения:',
+                                            reply_markup=cancel_kb())
     if callback_data.action == ActionButtons.REJECT.value.callback:
         await state.set_state(AdminModerateStates.reject)
         await state.update_data(ads_id=callback_data.ads_id)
@@ -120,6 +119,7 @@ async def handle_moderating_ads_data(callback_query: CallbackQuery, callback_dat
         await state.set_state(AdminModerateStates.bane)
         await state.update_data(author_id=callback_data.author_id)
         await callback_query.message.answer('Укажите причину бана:', reply_markup=cancel_kb())
+
 
 @admin_router.message(AdminModerateStates.approve, F.text != ActionButtons.CANCEL.value.name)
 async def ads_approve_state(
@@ -143,6 +143,7 @@ async def ads_approve_state(
         await state.clear()
         return await message.answer('Объявление в очереди на размещение!')
 
+
 @admin_router.message(AdminModerateStates.reject, F.text != ActionButtons.CANCEL.value.name)
 async def ads_reject_state(
         message: Message, state: FSMContext, tg_user: User, db: AsyncSession, cat_ads_service: CatAdsService
@@ -162,7 +163,8 @@ async def ads_reject_state(
         )
         return message.answer(f'Не удалось произвести модерацию объявления! {e}')
     await state.clear()
-    await message.answer('Объявление в очереди на отправку!')
+    return await message.answer('Объявление в очереди на отправку!')
+
 
 @admin_router.message(AdminModerateStates.bane, F.text != ActionButtons.CANCEL.value.name)
 async def ads_bane_state(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
@@ -175,7 +177,7 @@ async def ads_bane_state(message: Message, state: FSMContext, tg_user: User, db:
     try:
         user = await User.one_or_none(session=db, id=author_id)
         if not user:
-            raise ValueError(f'Пользователь с id: {author_id} не найден! ', )
+            raise ValueError(f'Пользователь с id: {author_id} не найден! ')
         user.is_banned = True
         db.add(user)
         try:
