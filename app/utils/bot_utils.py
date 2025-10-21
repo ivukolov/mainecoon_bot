@@ -56,21 +56,17 @@ async def bot_save_photos_from_photo_id_list(bot: Bot, photo_id_list: t.Collecti
     for photo_id in photo_id_list:
         # Генерируем имя файла
         file_name = get_photo_name_from_file_id(photo_id)
-        file: File | None = None
+        file_path = Path(directory) / file_name
         # Получаем пути строка и объект Path
-        local_path, global_path = get_images_paths(directory)
+        local_file_path, global_file_path = get_images_paths(file_path)
         # Получаем url путь
-        local_file_path = os.path.join(local_path, file_name)
         # Получаем место сохранения файла
-        global_file_path: Path = global_path / file_name
         file = await bot.get_file(photo_id)
         global_file_path_str = str(global_file_path)
         # Загружаем байты
         file_bytes = await bot.download_file(file.file_path)
         # Создаём словарь с параметрами для сохранения
         files_to_save[global_file_path_str] = file_bytes
-        # except Exception as e:
-        #     logger.error('Ошибка загрузки фото (%s) из tg %s', photo_id, e)
         is_created = await atomic_save_files(files_to_save)
         photo_schema= PhotoSchema(
             photo_id=photo_id,
@@ -150,6 +146,9 @@ async def get_confirm_code():
             logger.error(f"Error: {e}")
             await asyncio.sleep(5)
 
+
+async def get_moderator_id_from_pool():
+    return settings.MODERATOR_ID
 
 async def get_or_create_admin_user(session: AsyncSession) -> User:
     admin, _ = await User.get_or_create(
