@@ -7,6 +7,7 @@ import re
 
 from config import settings
 from database import User
+from database.blog.enums import AdStatus
 from keyboards.lexicon import CatGenders
 
 logger = getLogger(__name__)
@@ -28,9 +29,8 @@ class PhotoSchema(BaseModel):
 class BaseSchema(BaseModel):
     """"Базовая модель для всех типов рекламных акций"""
     bot_message_title: str | None = None
-    is_publicated: bool = False
-    is_moderated: bool = False
     author_id: int | None = None
+    status: AdStatus = Field(default=AdStatus.NEW_BORN)
     photos: List[PhotoSchema] = Field(default_factory=list)
 
     class Config:
@@ -135,8 +135,9 @@ class CatAdsSchema(BaseSchema):
                 raise ValueError(f'Неверный формат даты')
 
     def get_caption(self) -> str:
+        header = self.bot_message_title
         return (
-        "✅ Рекламный пост \n\n"
+        f"{header}\n\n"
         f"🐱 Имя: {self.name}\n"
         f"⚧ Пол: {self.gender}\n"
         f"📅 Дата рождения: {self.birth_date}\n"
