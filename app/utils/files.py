@@ -21,7 +21,7 @@ def get_images_paths(directory: str | Path) -> tuple[str, Path]:
     """
     local_path = (settings.IMAGES_DIR / directory).as_posix()
     global_path = settings.IMAGES_ROOT / directory
-    return local_path, global_path
+    return f"/{local_path}", global_path
 
 
 async def save_file(file_path: str | Path, file_bytes: Union[bytes, BytesIO, BinaryIO]) -> str:
