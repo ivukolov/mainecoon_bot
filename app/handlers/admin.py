@@ -102,7 +102,7 @@ async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_c
 
 
 @admin_router.callback_query(ModerateAd.filter())
-async def handle_moderate_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, state: FSMContext, tg_user: User):
+async def handle_moderating_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, state: FSMContext, tg_user: User):
     """Модерированное рекламных сообщений"""
     if callback_data.action == ActionButtons.APPROVE.value.callback:
         await state.set_state(AdminModerateStates.approve)
@@ -120,23 +120,16 @@ async def handle_moderate_ads_data(callback_query: CallbackQuery, callback_data:
         await callback_query.message.answer('Укажите причину бана:', reply_markup=cancel_kb())
 
 @admin_router.message(AdminModerateStates.approve, F.text != ActionButtons.CANCEL.value.name)
-async def ads_approve_state(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
+async def ads_approve_state(
+        message: Message, state: FSMContext, tg_user: User, cat_ads_service: CatAdsService
+):
     """Обработка сообщения перед отправкой в группу"""
     # Убрать повторяющиеся части!
     comment = message.text
     data = await state.get_data()
     ads_id: int = data.get('ads_id')
     try:
-        ads_to_moderate: CatAd = await CatAd.one_or_none(session=db, id=ads_id)
-        if not ads_to_moderate:
-            raise ValueError('Объявление id: %s не найдено! ', ads_id)
-        elif ads_to_moderate.is_moderated:
-            raise ValueError('Объявление id: %s уже прошло модерацию! ', ads_id)
-        else:
-            ads_to_moderate.is_moderated = True
-            ads_to_moderate.comment = comment
-            db.add(ads_to_moderate)
-            await db.flush()
+        await cat_ads_service.handle_moderation_states(ads_id=ads_id, comment=comment,)
     except Exception as e:
         logger.critical(
             'Не получилось обновить статус сообщения прошедшего модерацию %s', e
@@ -147,28 +140,21 @@ async def ads_approve_state(message: Message, state: FSMContext, tg_user: User, 
         return await message.answer('Объявление в очереди на размещение!')
 
 @admin_router.message(AdminModerateStates.reject, F.text != ActionButtons.CANCEL.value.name)
-async def ads_reject_state(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
+async def ads_reject_state(
+        message: Message, state: FSMContext, tg_user: User, db: AsyncSession, cat_ads_service: CatAdsService
+):
     """Обработка не прошедшего модерацию сообщения"""
     # Убрать повторяющиеся части!
     comment = message.text
     data = await state.get_data()
     ads_id = data.get('ads_id')
     try:
-        ads_to_moderate = await CatAd.one_or_none(session=db, id=ads_id)
-        if not ads_to_moderate:
-            raise ValueError('Объявление id: %s не найдено! ', ads_id)
-        elif ads_to_moderate.is_moderated:
-            raise ValueError('Объявление id: %s уже прошло модерацию! ', ads_id)
-        else:
-            ads_to_moderate.is_moderated = True
-            ads_to_moderate.comment = comment
-            ads_to_moderate.is_rejected = True
-            db.add(ads_to_moderate)
-            await db.flush()
+        await cat_ads_service.handle_moderation_states(ads_id=ads_id, comment=comment, is_rejected=True)
     except Exception as e:
         logger.critical(
             'Не получилось обновить статус сообщения - прошедшего модерацию %s', e
         )
+        return message.answer(f'Не удалось произвести модерацию объявления! {e}')
     await state.clear()
     await message.answer('Объявление в очереди на отправку!')
 
@@ -186,12 +172,16 @@ async def ads_bane_state(message: Message, state: FSMContext, tg_user: User, db:
         user.is_banned = True
         db.add(user)
         await db.flush()
-        await message.bot.send_message(chat_id=author_id, text=f'Вы были забанены. Причина: {comment}')
     except Exception as e:
         logger.critical(
-            'Не получилось обновить статус сообщения - прошедшего модерацию %s', e
+            'Не получилось обновить статус забаненного пользователя %s', e
         )
         await message.answer(f'Ошибка. Не удалось забанить пользователя {author_id}')
     else:
-        await message.answer('Пользователь забанен.')
+        try:
+            await message.bot.send_message(chat_id=author_id, text=f'Вы были забанены. Причина: {comment}')
+        except Exception as e:
+            logger.error('Не удалось отправить сообщение пользователю %s', e)
+            return await message.answer('Пользователь забанен, но оповестить его не получилось')
+    await message.answer('Пользователь забанен.')
     return await state.clear()
