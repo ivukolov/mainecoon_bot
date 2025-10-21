@@ -12,6 +12,7 @@ services:
       - ./app/logs/nginx/:/var/log/nginx/
       - ./nginx/templates/:/etc/nginx/templates/
       - ./nginx/ssl:/etc/nginx/ssl
+      - ./app/media:/app/media
     depends_on:
       - bot
     restart: unless-stopped
@@ -33,6 +34,7 @@ services:
 #      - "8000:8000"
     volumes:
       - ./app/logs:/app/logs
+      - ./app/media:/app/media
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,7 +52,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 #    ports:
-#      - "5438:5432"
+#      - "5432:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
@@ -79,6 +81,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  media_volume:
 
 networks:
   bot-network:
