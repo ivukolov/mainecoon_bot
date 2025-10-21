@@ -17,6 +17,7 @@ PROJECT_NAME: Final[str] = 'Кото-Вет помощник'
 # Telegram.
 ## ПАРАМЕТРЫ АДМИНИСТРАТОРА КАНАЛА
 ADMIN_ID: Final[int] = int(os.getenv("ADMIN_ID"))
+MODERATOR_ID: Final[int] = ADMIN_ID
 ADMIN_USERNAME: Final[str] = os.getenv("ADMIN_USERNAME")
 ADMIN_PASSWORD: Final[str] = os.getenv("ADMIN_PASSWORD")
 ## Бот
