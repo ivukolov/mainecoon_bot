@@ -17,7 +17,7 @@ session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=Fal
 
 @asynccontextmanager
 async def get_db_session() -> AsyncSession:
-    session = AsyncSessionLocal()
+    session = AsyncSessionLocal(expire_on_commit=False)
     try:
         yield session
         await session.commit()
@@ -30,4 +30,4 @@ async def get_db_session() -> AsyncSession:
 
 async def get_db_session_directly():
     """Создать сессию напрямую"""
-    return AsyncSessionLocal()
+    return AsyncSessionLocal(expire_on_commit=False)
