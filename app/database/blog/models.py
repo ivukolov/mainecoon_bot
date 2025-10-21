@@ -219,8 +219,8 @@ class CatAd(BaseModel):
 
     async def unlink_photos(self):
         for foto in self.photos:
-            file_path: AsyncPath = AsyncPath(foto.photo_path)
-            if file_path.exists():
+            file_path: AsyncPath = AsyncPath(foto.file_path)
+            if await file_path.exists():
                 await file_path.unlink()
                 logger.debug("Файл: %s удалён.", file_path)
 
