@@ -63,7 +63,7 @@ class AdsUserApprove(Enum):
 
 
 class ActionButtons(Enum):
-    CANCEL = Button(name="❌ Отмена" )
+    CANCEL = Button(name="❌ Вернуться в меню" )
     BACK = Button(name="⬅️ Назад")
     NEXT_PAGE = Button(name="Вперед ▶️")
     PREV_PAGE = Button(name="◀️ Назад")
