@@ -44,13 +44,14 @@ services:
       - bot-network
 
   postgres:
-    image: postgres:16.1
+    build: ./postgres/
     container_name: mainecoon_postgres
     restart: unless-stopped
     env_file:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/backups/:/backups/
 #    ports:
 #      - "5432:5432"
     healthcheck:
