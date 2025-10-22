@@ -10,7 +10,14 @@ from aiogram.exceptions import TelegramServerError, TelegramNotFound
 
 from utils.bot_utils import bot_send_message
 from database.db import session_factory, get_db_session_directly
-from middlewares import DatabaseMiddleware, BotMiddleware, TeletonClientMiddleware, UserMiddleware, CatAdsServiceMiddleware
+from middlewares import (
+    DatabaseMiddleware,
+    BotMiddleware,
+    TeletonClientMiddleware,
+    UserMiddleware,
+    CatAdsServiceMiddleware,
+    BanMiddleware
+)
 from clients.teletone import TeletonClientManager
 from utils.cache import RedisCache
 from web.app import run_fastapi
@@ -47,6 +54,7 @@ async def main():
     dp.update.middleware(TeletonClientMiddleware(tt_client_manager))
     dp.update.middleware(DatabaseMiddleware(session_factory))
     dp.update.middleware(UserMiddleware())
+    dp.update.middleware(BanMiddleware())
     dp.update.middleware(CatAdsServiceMiddleware(cache_storage=cache_storage, bot=bot))
     dp.update.middleware(BotMiddleware(bot))
     try:
