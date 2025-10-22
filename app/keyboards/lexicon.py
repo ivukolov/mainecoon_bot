@@ -83,9 +83,9 @@ class KeyboardBlog(Enum):
 
 # ADMIN
 class AdminMenu(Enum):
-    ADD_INTERACTIVES = Button(name='Создать Интерактив')
     PARSE_POSTS =  Button(name='Актуализировать все посты')
     UPDATE_USERS =  Button(name='Обновить список пользователей')
+    CHANGE_PASSWORD = Button(name='Сменить пароль')
 
 class AdminInteractives(Enum):
     POLL = InteractivesButton(name='Создать голосование', callback='poll')
