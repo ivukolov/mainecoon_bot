@@ -26,12 +26,16 @@ def moderator_required(handler: Callable) -> Callable:
     """
 
     @wraps(handler)
-    async def wrapper(message: types.Message, tg_user=None, *args, **kwargs) -> Any:
+    async def wrapper(event: types.Message | types.CallbackQuery, tg_user=None, *args, **kwargs) -> Any:
+        if isinstance(event, types.CallbackQuery):
+            message_obj = event.message
+        else:
+            message_obj = event
         if tg_user and tg_user.is_moderator:
-            return await handler(message=message, tg_user=tg_user, *args, **kwargs)
+            return await handler(event, tg_user=tg_user, *args, **kwargs)
         # Проверяем наличие пользователя
-        await message.answer("❌ Доступ запрещён. Требуются права модератора или выше!")
-        logger.warning(f'Попытка доступка к функциям модератора от пользователя {message.from_user}')
+        await message_obj.answer("❌ Доступ запрещён. Требуются права модератора или выше!")
+        logger.warning(f'Попытка доступка к функциям модератора от пользователя {message_obj.from_user}')
         return
 
     return wrapper
@@ -42,12 +46,16 @@ def admin_required(handler: Callable) -> Callable:
     """
 
     @wraps(handler)
-    async def wrapper(message: types.Message, tg_user=None, *args, **kwargs) -> Any:
+    async def wrapper(event: types.Message | types.CallbackQuery, tg_user=None, *args, **kwargs) -> Any:
+        if isinstance(event, types.CallbackQuery):
+            message_obj = event.message
+        else:
+            message_obj = event
         if tg_user and tg_user.is_admin:
-            return await handler(message=message, tg_user=tg_user, *args, **kwargs)
+            return await handler(event, tg_user=tg_user, *args, **kwargs)
         # Проверяем наличие пользователя
-        await message.answer("❌ Доступ запрещён. Требуются права администратора.")
-        logger.warning(f'Попытка доступка к админ панели от пользователя {message.from_user}')
+        await message_obj.answer("❌ Доступ запрещён. Требуются права администратора.")
+        logger.warning(f'Попытка доступка к админ панели от пользователя {message_obj.from_user}')
         return
 
     return wrapper
