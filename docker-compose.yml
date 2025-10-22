@@ -52,8 +52,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/backups/:/backups/
-#    ports:
-#      - "5432:5432"
+    ports:
+      - "5432:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
@@ -67,8 +67,8 @@ services:
     image: redis:7-alpine
     container_name: mainecoon_redis
     restart: unless-stopped
-#    ports:
-#      - "6379:6379"
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
