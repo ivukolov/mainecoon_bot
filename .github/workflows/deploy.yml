@@ -32,7 +32,7 @@ jobs:
           
           echo "Применяем последние обновления"
           git fetch origin
-          git reset --hard origin/master
+          git pull origin master
           
           echo "Останавливаем Docker контейнеры"
           docker-compose down
