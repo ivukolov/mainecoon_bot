@@ -140,3 +140,4 @@ dmypy.json
 
 nginx/ssl/
 /postgres/backups/*
+/app/media/*
