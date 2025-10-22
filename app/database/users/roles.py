@@ -4,6 +4,7 @@ from enum import Enum
 class UserRole(Enum):
     """Роли пользователей"""
     ADMIN = "ADMIN"
+    MODERATOR = "MODERATOR"
     USER = "USER"
     GUEST = "GUEST"
     BOT = "BOT"
