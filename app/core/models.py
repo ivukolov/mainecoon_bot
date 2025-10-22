@@ -8,6 +8,7 @@ import sqlalchemy.orm as orm
 from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm.collections import InstrumentedList
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,34 @@ class BaseModelNoID(AsyncAttrs, DeclarativeBase):
         onupdate=datetime.now(timezone.utc),
         comment='Дата обновления'
     )
+
+    @classmethod
+    async def on_conflict_do_update(cls, session, dict_list, exclude_fields: set = None):
+        """Асинхронный update пользователя"""
+        if not exclude_fields:
+            exclude_fields = {'id'}
+
+        all_fields = set(cls.__table__.columns.keys())
+        update_fields = all_fields - exclude_fields
+
+        stmt = pg_insert(cls).values(dict_list)
+
+        set_dict = {}
+        for field in update_fields:
+            set_dict[field] = getattr(stmt.excluded, field)
+
+        stmt = stmt.on_conflict_do_update(
+            index_elements=['id'],
+            set_=set_dict
+        )
+
+        try:
+            await session.execute(stmt)
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            logger.error(f'Ошибка сохранения данных {e}')
+            raise ValueError(f'Ошибка сохранения данных {e}')
 
     @classmethod
     async def one_or_none(cls, session: AsyncSession, **kwargs) -> t.Optional[T]:
