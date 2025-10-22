@@ -20,8 +20,8 @@ from keyboards.lexicon import MainMenu, KeyboardBlog, AdminMenu, AdminInteractiv
 from keyboards.ads import ModerateAd
 from database.users.models import User
 from services.ads import CatAdsService
-from states.admin import AdminModerateStates
-from utils.decorators import admin_required
+from states.admin import AdminModerateStates, AdminPasswordForm
+from utils.decorators import admin_required, moderator_required
 from mappers.telegram import TelegramMessageMapper, TelegramUserMapper
 from schemas.dto import TelegramMessagesListDTO
 from services.messages import MessagesService
@@ -45,62 +45,101 @@ async def admin_menu(message: Message, tg_user: User):
         f"ID: {chat.id}\n"
         f"Тип: {chat.type}\n"
         f"Username: @{chat.username if chat.username else 'Нет'}\n"
-        f"Описание: {chat.description[:100] + '...' if chat.description and len(chat.description) > 100 else chat.description or 'Нет описания'}"
+        f"Описание: {chat.description}"
     )
     await message.answer(response, reply_markup=admin_tools_menu_kb())
 
-
-@admin_router.message(F.text == AdminMenu.ADD_INTERACTIVES.value.name)
-@admin_required
-async def admin_menu_make_interactives(message: Message, db: AsyncSession, tg_user: User):
-    return await message.answer('Выберите тип интерактива', reply_markup=maike_interactives_kb())
 
 
 @admin_router.message(F.text == AdminMenu.PARSE_POSTS.value.name)
 @admin_required
 async def admin_menu_parse_posts(message: Message, db: AsyncSession, teleton_client: TelegramClient, tg_user: User):
-    channel = await teleton_client.get_entity(settings.CHANNEL_ID)
-    await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
-    logger.info('Запущен процесс обновления постов и тэгов')
-    parsed_messages = [m async for m in teleton_client.iter_messages(
-        channel,
-        limit=None,
-    )]
-    logger.info(f'Из канала загружено {len(parsed_messages)} постов, приступаю к обработке')
-    service = MessagesService(session=db, messages=parsed_messages, is_aiogram=False)
+    """Обновление информации о постах"""
     try:
-        await service.service_and_save_messages()
+        channel = await teleton_client.get_entity(settings.CHANNEL_ID)
+        await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
+        logger.info('Запущен процесс обновления постов и тэгов')
+        parsed_messages = [m async for m in teleton_client.iter_messages(
+            channel,
+            limit=None,
+        )]
+        logger.info(f'Из канала загружено {len(parsed_messages)} постов, приступаю к обработке')
+        service = MessagesService(session=db, messages=parsed_messages, is_aiogram=False)
     except Exception as e:
-        logger.error(e, exc_info=True)
-        return await message.answer(f"Не удалось актуализировать все посты {e}", reply_markup=admin_tools_menu_kb())
-    logger.info('Все посты актуализированные')
-    return await message.answer(f"Все посты актуализированные!", reply_markup=admin_tools_menu_kb())
+        logger.critical('Не удалось обновить информацию о постах {}'.format(e))
+    else:
+        try:
+            await service.service_and_save_messages()
+            logger.info('Все посты актуализированные')
+            return await message.answer(
+                f"Все посты актуализированные!", reply_markup=admin_tools_menu_kb()
+            )
+        except Exception as e:
+            logger.critical('Не удалось произвести загрузку постов в базу {}'.format(e))
+    return message.answer(f"Не удалось актуализировать посты {e}", reply_markup=admin_tools_menu_kb())
 
 
 @admin_router.message(F.text == AdminMenu.UPDATE_USERS.value.name)
 @admin_required
-async def admin_menu_add_new_posts(message: Message, db: AsyncSession, teleton_client: TelegramClient, tg_user: User):
-    # Вынести в отдельный метод
-    channel = await teleton_client.get_entity(settings.CHANNEL_ID)  # Вынести в отдельный метод
-    chat = await teleton_client.get_permissions(channel, await teleton_client.get_me())
-    if not chat.is_admin:
-        return await message.answer(
-            f"❌ Вы не является администратором группы для сбора информации о пользователях!",
-            reply_markup=admin_tools_menu_kb()
-        )
-    parsed_users = [u async for u in teleton_client.iter_participants(channel, limit=None)]
-    users_dto = TelegramUserMapper.get_users_from_telethon_raw_data(parsed_users)
-    users_list = users_dto.get_model_dump_list()
+async def admin_menu_parse_group_users(
+        message: Message, db: AsyncSession, teleton_client: TelegramClient, tg_user: User
+):
+    """Обновление данных о пользователях"""
     try:
-        await User.on_conflict_do_update_users(session=db, users_dict_list=users_list)
+        channel = await teleton_client.get_entity(settings.CHANNEL_ID)  # Вынести в отдельный метод
+        chat = await teleton_client.get_permissions(channel, await teleton_client.get_me())
+        if not chat.is_admin:
+            return await message.answer(
+                f"❌ Вы не является администратором группы для сбора информации о пользователях!",
+                reply_markup=admin_tools_menu_kb()
+            )
+        parsed_users = [u async for u in teleton_client.iter_participants(channel, limit=None)]
+        users_dto = TelegramUserMapper.get_users_from_telethon_raw_data(parsed_users)
+        users_list = users_dto.get_model_dump_list()
     except Exception as e:
-        await db.rollback()
-        print(f"Ошибка: {e}")
-        raise
-    return await message.answer(f"Обновил информация о пользователях", reply_markup=admin_tools_menu_kb())
+        logger.critical('Ошибка парсинга канала через teletone {}'.format(e))
+    else:
+        try:
+            await User.on_conflict_do_update_users(session=db, users_dict_list=users_list)
+            logger.info('Все пользователи добавлены')
+            return await message.answer(
+                f"Обновил информация о пользователях", reply_markup=admin_tools_menu_kb()
+            )
+        except Exception as e:
+            await db.rollback()
+            logger.critical('Не удалось произвести загрузку пользователей в базу {}'.format(e))
+    return message.answer(
+        f"Не удалось обновить информацию о пользователях {e}", reply_markup=admin_tools_menu_kb()
+    )
+
+
+@admin_router.message(F.text == AdminMenu.CHANGE_PASSWORD.value.name)
+@moderator_required
+async def admin_menu_add_new_posts(message: Message, state: FSMContext, tg_user: User):
+    """Обработка кнопки смена пароля"""
+    await state.set_state(AdminPasswordForm.input_password)
+    return await message.answer(f"Введите ваш новый пароль!", reply_markup=cancel_kb())
+
+
+@admin_router.message(AdminPasswordForm.input_password)
+@moderator_required
+async def admin_menu_add_new_posts(message: Message, state: FSMContext, tg_user: User):
+    """Смена пароля"""
+    password = message.text
+    try:
+        await tg_user.set_password(password)
+    except Exception as e:
+        logger.critical(
+            'Во время попытки изменения пароля пользователя {} возникло исключение'.format(tg_user.id, e)
+        )
+    else:
+        logger.info(f'Пароль пользователя {tg_user.id} был успешно изменён!')
+        await state.clear()
+        return await message.answer(f"Пароль обновлён", reply_markup=admin_tools_menu_kb())
 
 
 @admin_router.callback_query(ModerateAd.filter())
+@moderator_required
 async def handle_moderating_ads_data(callback_query: CallbackQuery, callback_data: ModerateAd, state: FSMContext,
                                      tg_user: User):
     """Модерированное рекламных сообщений"""
@@ -122,6 +161,7 @@ async def handle_moderating_ads_data(callback_query: CallbackQuery, callback_dat
 
 
 @admin_router.message(AdminModerateStates.approve, F.text != ActionButtons.CANCEL.value.name)
+@moderator_required
 async def ads_approve_state(
         message: Message, state: FSMContext, tg_user: User, cat_ads_service: CatAdsService
 ):
@@ -145,6 +185,7 @@ async def ads_approve_state(
 
 
 @admin_router.message(AdminModerateStates.reject, F.text != ActionButtons.CANCEL.value.name)
+@moderator_required
 async def ads_reject_state(
         message: Message, state: FSMContext, tg_user: User, db: AsyncSession, cat_ads_service: CatAdsService
 ):
@@ -167,6 +208,7 @@ async def ads_reject_state(
 
 
 @admin_router.message(AdminModerateStates.bane, F.text != ActionButtons.CANCEL.value.name)
+@moderator_required
 async def ads_bane_state(message: Message, state: FSMContext, tg_user: User, db: AsyncSession):
     """Обработка бана пользователя и удаления рекламного сообщения"""
     # Убрать повторяющиеся части!
