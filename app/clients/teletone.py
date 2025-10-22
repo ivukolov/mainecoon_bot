@@ -1,6 +1,5 @@
 from logging import getLogger
 import typing as t
-import json
 from pathlib import Path
 from typing import Final, Optional, Union
 
