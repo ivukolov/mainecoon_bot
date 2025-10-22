@@ -20,6 +20,22 @@ def async_timer(func):
     return wrapper
 
 
+def moderator_required(handler: Callable) -> Callable:
+    """
+    Декоратор, который проверяет, является ли пользователь модератором
+    """
+
+    @wraps(handler)
+    async def wrapper(message: types.Message, tg_user=None, *args, **kwargs) -> Any:
+        if tg_user and tg_user.is_moderator:
+            return await handler(message=message, tg_user=tg_user, *args, **kwargs)
+        # Проверяем наличие пользователя
+        await message.answer("❌ Доступ запрещён. Требуются права модератора или выше!")
+        logger.warning(f'Попытка доступка к функциям модератора от пользователя {message.from_user}')
+        return
+
+    return wrapper
+
 def admin_required(handler: Callable) -> Callable:
     """
     Декоратор, который проверяет, является ли пользователь администратором
