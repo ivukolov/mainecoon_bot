@@ -22,14 +22,14 @@ ADMIN_PASSWORD: Final[str] = os.getenv("ADMIN_PASSWORD")
 ## Бот
 PARTNERS_TAG: Final[str] = '#Партнёры'
 BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, получается у @botfather
-CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID") Id основного канала
-ADS_CHANNEL_ID: Final[int] = -1003179370474 #Id канала для рекламы
+CHANNEL_ID: Final[int] = int(os.getenv("CHANNEL_ID")) # Id основного канала
+ADS_CHANNEL_ID: Final[int] = int(os.getenv("ADS_CHANNEL_ID")) #Id канала для рекламы
 # Whatcher - background task. Проверяет базу на наличие объявлений для модерации и уже модерированных.
 # Для последующей отправки соответствующему пользователю.
 ## Интервал запуска проверки в секундах
-CHECK_INTERVAL: Final[int]  = 60
+CHECK_INTERVAL: Final[int]  = 60*3
 ## Время для повторного напоминания в случае отсутствия реакции модератора в секундах. (Время жизни кэша)
-PENDING_ADS_TTL: Final[int] = 120 #5*60*60
+PENDING_ADS_TTL: Final[int] = CHECK_INTERVAL * 60 #5*60*60
 
 
 # Teletone
