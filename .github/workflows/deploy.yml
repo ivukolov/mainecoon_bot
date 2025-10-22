@@ -62,7 +62,7 @@ jobs:
           
           🐳 Контейнеры собраны и запущены!
           🌐 Сервер: ${{ secrets.SERVER_HOST }}
-          ⏰ Время: ${{ steps.deploy.outputs.time }}
+          ⏰ Время: ${{ steps.time.outputs.formattedTime }}
 
   handle-failure:
     runs-on: ubuntu-latest
