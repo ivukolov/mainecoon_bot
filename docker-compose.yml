@@ -30,8 +30,8 @@ services:
     env_file:
       - .env
     entrypoint: bash -c "alembic upgrade head && python main.py"
-#    ports:
-#      - "8000:8000"
+    ports:
+      - "8000:8000"
     volumes:
       - ./app/logs:/app/logs
       - ./app/media:/app/media
