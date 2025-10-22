@@ -2,8 +2,8 @@ name: Deploy with Docker Compose
 
 on:
   push:
-    branches: [ main ]
-
+    branches:
+      - '*'
 jobs:
   deploy:
     runs-on: ubuntu-latest
