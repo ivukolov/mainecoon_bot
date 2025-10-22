@@ -17,13 +17,13 @@ PROJECT_NAME: Final[str] = 'Кото-Вет помощник'
 # Telegram.
 ## ПАРАМЕТРЫ АДМИНИСТРАТОРА КАНАЛА
 ADMIN_ID: Final[int] = int(os.getenv("ADMIN_ID"))
-MODERATOR_ID: Final[int] = ADMIN_ID
 ADMIN_USERNAME: Final[str] = os.getenv("ADMIN_USERNAME")
 ADMIN_PASSWORD: Final[str] = os.getenv("ADMIN_PASSWORD")
 ## Бот
 PARTNERS_TAG: Final[str] = '#Партнёры'
 BOT_TOKEN: Final[str]  = os.getenv("BOT_TOKEN",) # Токен бота, получается у @botfather
-CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID")
+CHANNEL_ID: Final[int] = -1001573169353 #os.getenv("CHANNEL_ID") Id основного канала
+ADS_CHANNEL_ID: Final[int] = -1003179370474 #Id канала для рекламы
 # Whatcher - background task. Проверяет базу на наличие объявлений для модерации и уже модерированных.
 # Для последующей отправки соответствующему пользователю.
 ## Интервал запуска проверки в секундах
