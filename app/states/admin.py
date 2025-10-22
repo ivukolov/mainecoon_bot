@@ -5,3 +5,6 @@ class AdminModerateStates(StatesGroup):
     bane = State()
     approve = State()
     reject = State()
+
+class AdminPasswordForm(StatesGroup):
+    input_password = State()
