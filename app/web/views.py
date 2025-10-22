@@ -41,10 +41,10 @@ class ColumnLabelsGeneratorMixin:
 class UserAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, ModelView, model=User):
     name = "Пользователь"
     name_plural = "Пользователи"
-    column_list = ['id', 'username', 'is_active', 'first_name', 'last_name', 'role', 'info', 'invited_users_count']
-    form_columns = ['id', 'username', 'password', 'is_active', 'first_name', 'last_name', 'role', 'info']
+    column_list = ['id', 'username', 'is_active', 'is_banned', 'first_name', 'last_name', 'role', 'info', 'invited_users_count']
+    form_columns = ['id', 'username', 'password', 'is_active', 'is_banned', 'first_name', 'last_name', 'role', 'info']
     can_export = True
-    column_sortable_list = ["id", 'role', 'is_active']
+    column_sortable_list = ["id", 'role', 'is_active', 'is_banned']
     column_default_sort = [('role', True), ('id', True)]
     column_searchable_list = ["id", "username", "first_name", "last_name"]
     # column_labels = {
@@ -59,7 +59,7 @@ class UserAdmin(ColumnLabelsGeneratorMixin, PostExcludeMixin, ReadOnlyMixin, Mod
     # }
     form_groups = {
         "main_info": {
-            "fields": ["username", "name", "is_active"],
+            "fields": ["username", "name", "is_active", "is_banned"],
             "label": "Основная информация"
         },
         "additional_info": {
