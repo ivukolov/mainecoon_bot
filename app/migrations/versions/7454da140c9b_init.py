@@ -1,8 +1,8 @@
 """Init
 
-Revision ID: 38af4a80e57e
+Revision ID: 7454da140c9b
 Revises: 
-Create Date: 2025-10-22 11:45:01.972935
+Create Date: 2025-10-22 13:26:24.369502
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '38af4a80e57e'
+revision: str = '7454da140c9b'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -76,7 +76,7 @@ def upgrade() -> None:
     sa.Column('is_premium', sa.Boolean(), nullable=True, comment='Премиум подписка'),
     sa.Column('ads_publacated', sa.SMALLINT(), nullable=True, comment='Количество рекламных сообщений отправленных пользователем'),
     sa.Column('is_banned', sa.Boolean(), nullable=True, comment='Пользователь забанен'),
-    sa.Column('role', sa.Enum('ADMIN', 'USER', 'GUEST', 'BOT', name='userrole'), server_default='USER', nullable=False, comment='Роль пользователя'),
+    sa.Column('role', sa.Enum('ADMIN', 'MODERATOR', 'USER', 'GUEST', 'BOT', name='userrole'), server_default='USER', nullable=False, comment='Роль пользователя'),
     sa.Column('email', sa.String(length=255), nullable=True, comment='Электронная почта'),
     sa.Column('info', sa.String(length=100), nullable=True, comment='Доп информация'),
     sa.Column('is_active', sa.Boolean(), nullable=False, comment='Является подписчиком канала'),
