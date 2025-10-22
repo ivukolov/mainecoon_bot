@@ -147,8 +147,14 @@ async def get_confirm_code():
             await asyncio.sleep(5)
 
 
-async def get_moderator_id_from_pool():
-    return settings.MODERATOR_ID
+async def get_moderator_id_from_pool(session: AsyncSession) -> int:
+    """Функция для формирования пула модераторов, в случае их увеличения
+    В случае отсутсвия модераторов возвращяет id администратора
+    """
+    moderators_list: list[User] = await User.get_moderators_pool(session=session)
+    if not moderators_list:
+        return settings.ADMIN_ID
+    return moderators_list[-1].id
 
 async def get_or_create_admin_user(session: AsyncSession) -> User:
     admin, _ = await User.get_or_create(
