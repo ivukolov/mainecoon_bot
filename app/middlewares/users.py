@@ -4,9 +4,8 @@ from typing import Any, Awaitable, Callable, Dict, TYPE_CHECKING
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from sqlalchemy import select
 
-if TYPE_CHECKING:
-    from aiogram.types import TelegramObject, Message, User as TgUser
-    from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.types import TelegramObject, Message, User as TgUser, CallbackQuery
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from utils.identifiers import generate_uuid_from_str
 from database.users.models import User
@@ -36,4 +35,20 @@ class UserMiddleware(BaseMiddleware):
             logger.error(
                 'Middleware error. Во время получения информации о пользователе возникла ошибка', exc_info=True
             )
+        return await handler(event, data)
+
+class BanMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+        event: Message | CallbackQuery,
+        data: Dict[str, Any]
+    ) -> Any:
+        user: User = data['tg_user']
+        if user and user.is_banned:
+            await event.bot.send_message(chat_id=user.id,text=
+                "❌ Вы заблокированы и не можете использовать бота.\n"
+                "Для разблокировки обратитесь к администратору."
+            )
+            return  # Прерываем обработку
         return await handler(event, data)
