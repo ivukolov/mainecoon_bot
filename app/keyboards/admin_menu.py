@@ -8,7 +8,7 @@ def admin_tools_menu_kb() -> ReplyKeyboardMarkup:
     buttons = [
         [KeyboardButton(text=admin_btn.value.name)] for admin_btn in AdminMenu
     ]
-    buttons.append([KeyboardButton(text=ActionButtons.MAIN_MENU)])
+    buttons.append([KeyboardButton(text=ActionButtons.MAIN_MENU.value.name)])
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def maike_interactives_kb() -> InlineKeyboardMarkup:
