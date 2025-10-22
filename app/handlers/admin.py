@@ -71,8 +71,13 @@ async def admin_menu_parse_posts(message: Message, db: AsyncSession, teleton_cli
         try:
             await service.service_and_save_messages()
             logger.info('Все посты актуализированные')
+            if service.messages_dto.error_count == 0:
+                return await message.answer(
+                    f"Все посты актуализированные!", reply_markup=admin_tools_menu_kb()
+                )
             return await message.answer(
-                f"Все посты актуализированные!", reply_markup=admin_tools_menu_kb()
+                f'Во время актуализации постов возникла ошибка!\n'
+                f'обработано/не обработано:{service.messages_dto.text_messages_count}/{service.messages_dto.error_count}'
             )
         except Exception as e:
             logger.critical('Не удалось произвести загрузку постов в базу {}'.format(e))
@@ -127,11 +132,12 @@ async def admin_menu_add_new_posts(message: Message, state: FSMContext, tg_user:
     """Смена пароля"""
     password = message.text
     try:
-        await tg_user.set_password(password)
+        tg_user.set_password(password)
     except Exception as e:
         logger.critical(
             'Во время попытки изменения пароля пользователя {} возникло исключение'.format(tg_user.id, e)
         )
+        await message.answer(f'Ошибка {e}', reply_markup=cancel_kb())
     else:
         logger.info(f'Пароль пользователя {tg_user.id} был успешно изменён!')
         await state.clear()
