@@ -124,7 +124,7 @@ class CatAdsService:
             raise ValueError('Объявление id: %s уже прошло модерацию! ', ads_id)
         else:
             ads_to_moderate.status = status
-            ads_to_moderate.comment = comment
+            ads_to_moderate.bot_message_title = comment
             self.session.add(ads_to_moderate)
             await self.session.flush()
             await self.cache_storage.rem_set(settings.PENDING_ADS_KEY, ads_id)
@@ -213,7 +213,7 @@ class CatAdsService:
                 for ad in pending_cat_ads:
                     try:
                         if ad.status == AdStatus.NEW_BORN:
-                            moderator_id = await get_moderator_id_from_pool()
+                            moderator_id = await get_moderator_id_from_pool(session=self.session)
                             len_pending_ads = len(pending_cat_ads)
                             logger.info(f"Найдено {len_pending_ads} объявления для модерации")
                             await self.bot.send_message(
@@ -242,7 +242,7 @@ class CatAdsService:
                                 await self.send_pending_ad(
                                     pending_cat_ad=ad,
                                     user_id=ad.author_id,
-                                    info_message='Ваше сообщение было отклонено модератором.')
+                                    info_message='Ваше рекланый пост был отклонен модератором.')
                                 logger.info(f'Сообщение {ad.id} было отклонено модератором!')
                                 try:
                                     await self.session.delete(ad)
@@ -255,7 +255,12 @@ class CatAdsService:
                                 await self.send_pending_ad(
                                     pending_cat_ad=ad,
                                     user_id=ad.author_id,
-                                    info_message='Ваше сообщение было одобрено модератором.')
+                                    info_message='Ваш рекламный пост был одобрен модератором.'
+                                )
+                                await self.send_pending_ad(
+                                    pending_cat_ad=ad,
+                                    user_id=settings.ADS_CHANNEL_ID,
+                                )
                                 ad.status = AdStatus.PUBLICATED
                                 logger.info('Размещено сообщение в котоборохолке !')
                                 self.session.add(ad)
