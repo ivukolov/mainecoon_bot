@@ -1,0 +1,89 @@
+name: Deploy with Docker Compose
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Deploy and restart containers
+      uses: appleboy/ssh-action@v0.1.7
+      id: deploy
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT }}
+        script_stop: true
+        script: |
+          set -e
+          echo "Начинаем процесс сборки..."
+          
+          cd ${{ secrets.PROJECT_PATH }}
+          
+          echo "Применяем последние обновления"
+          git fetch origin
+          git reset --hard origin/main
+          
+          echo "Останавливаем Docker контейнеры"
+          docker-compose down
+          
+          echo "Собираем новые контейнеры"
+          docker-compose up -d --build
+          
+          echo "Проверяем состояние контейнеров..."
+          sleep 10
+          docker-compose ps
+          
+          echo "Сборка успешно завершена!"
+
+    - name: Send success notification
+      if: success()
+      uses: appleboy/telegram-action@v0.2.0
+      with:
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        message: |
+          ✅ Загрузка успешно завершена!
+          
+          Репозиторий: ${{ github.repository }}
+          Ветка: ${{ github.ref }}
+          Коммит: ${{ github.sha }}
+          Автор: ${{ github.actor }}
+          
+          🐳 Контейнеры собраны и запущены!
+          🌐 Сервер: ${{ secrets.SERVER_HOST }}
+          ⏰ Время: ${{ steps.deploy.outputs.time }}
+
+  handle-failure:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure()
+
+    steps:
+    - name: Send failure notification
+      uses: appleboy/telegram-action@v0.2.0
+      with:
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        message: |
+          ❌ Сборка заваршилась с ошибкой!
+          
+          Репозиторий: ${{ github.repository }}
+          Ветка: ${{ github.ref }}
+          Коммит: ${{ github.sha }}
+          Автор: ${{ github.actor }}
+          
+          🚨 Лог ошибки:
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          🔧 Сервер: ${{ secrets.SERVER_HOST }}
