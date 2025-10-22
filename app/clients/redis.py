@@ -3,7 +3,6 @@ import typing as t
 from redis.asyncio.client import Redis
 from redis.asyncio.connection import ConnectionPool
 
-
 from config import settings
 
 def get_redis_client(
