@@ -127,9 +127,13 @@ class User(BaseModel):
         return self.role == UserRole.ADMIN
 
     @property
+    def is_moderator(self) -> bool:
+        return self.role in {UserRole.ADMIN, UserRole.MODERATOR}
+
+    @property
     def requires_password(self) -> bool:
         """Определяет, требуется ли пароль для текущей роли. (на случай добавления модераторов)"""
-        return self.role in [UserRole.ADMIN, ]
+        return self.role in {UserRole.ADMIN, UserRole.MODERATOR}
 
 
     @property
@@ -156,6 +160,12 @@ class User(BaseModel):
 
     def __str__(self) -> str:
         return f'<Пользователь: @{self.username} "{self.first_name} {self.last_name}">'
+
+    @classmethod
+    async def get_moderators_pool(cls, session: AsyncSession,):
+        stmt = sa.select(cls).where(cls.role == UserRole.MODERATOR)
+        query = await session.execute(stmt)
+        return query.all()
 
     @classmethod
     async def on_conflict_do_update_users(cls, session, users_dict_list):
@@ -205,7 +215,7 @@ class User(BaseModel):
             :param password: <PASSWORD>
             :return: True если пользователь валиден, False в остальных
         """
-        if self.is_admin:
+        if self.is_moderator:
             return self.verify_password(password)
         return False
 
