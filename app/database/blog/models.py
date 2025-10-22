@@ -122,6 +122,7 @@ class Post(BaseModel):
         secondary=post_tags,
         back_populates="posts",
         lazy="selectin",
+        uselist=True
     )
 
     def __str__(self):
