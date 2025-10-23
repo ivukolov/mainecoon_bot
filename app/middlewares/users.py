@@ -23,12 +23,6 @@ class UserMiddleware(BaseMiddleware):
         telegram_user: TgUser = data.get("event_from_user")
         try:
             if telegram_user:
-                if telegram_user.is_banned:
-                    await event.bot.send_message(chat_id=telegram_user.id, text=
-                    "❌ Вы заблокированы и не можете использовать бота.\n"
-                    "Для разблокировки обратитесь к администратору."
-                                                 )
-                    return  # Прерываем обработку
                 username = telegram_user.username or generate_uuid_from_str(name=str(telegram_user.id))
                 user, created = await User.get_or_create(session, id=telegram_user.id, defaults={
                     'first_name': telegram_user.first_name,
@@ -36,9 +30,16 @@ class UserMiddleware(BaseMiddleware):
                     'role': UserRole.BOT if telegram_user.is_bot else UserRole.USER,
                     'username': username,
                 })
+                if telegram_user.is_banned:
+                    await event.bot.send_message(
+                        chat_id=telegram_user.id, text=
+                        "❌ Вы заблокированы и не можете использовать бота.\n"
+                        "Для разблокировки обратитесь к администратору."
+                    )
+                    return  # Прерываем обработку
                 data["tg_user"] = user
         except Exception:
             logger.error(
-                'Middleware error. Во время получения информации о пользователе возникла ошибка', exc_info=True
+                'Middleware error. Во время получения информации о пользователе возникла ошибка'
             )
         return await handler(event, data)
