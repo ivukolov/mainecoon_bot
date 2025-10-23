@@ -30,7 +30,7 @@ class UserMiddleware(BaseMiddleware):
                     'role': UserRole.BOT if telegram_user.is_bot else UserRole.USER,
                     'username': username,
                 })
-                if telegram_user.is_banned:
+                if user.is_banned:
                     await event.bot.send_message(
                         chat_id=telegram_user.id, text=
                         "❌ Вы заблокированы и не можете использовать бота.\n"
