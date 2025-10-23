@@ -23,6 +23,12 @@ class UserMiddleware(BaseMiddleware):
         telegram_user: TgUser = data.get("event_from_user")
         try:
             if telegram_user:
+                if telegram_user.is_banned:
+                    await event.bot.send_message(chat_id=telegram_user.id, text=
+                    "❌ Вы заблокированы и не можете использовать бота.\n"
+                    "Для разблокировки обратитесь к администратору."
+                                                 )
+                    return  # Прерываем обработку
                 username = telegram_user.username or generate_uuid_from_str(name=str(telegram_user.id))
                 user, created = await User.get_or_create(session, id=telegram_user.id, defaults={
                     'first_name': telegram_user.first_name,
@@ -35,20 +41,4 @@ class UserMiddleware(BaseMiddleware):
             logger.error(
                 'Middleware error. Во время получения информации о пользователе возникла ошибка', exc_info=True
             )
-        return await handler(event, data)
-
-class BanMiddleware(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-        event: Message | CallbackQuery,
-        data: Dict[str, Any]
-    ) -> Any:
-        user: User = data['tg_user']
-        if user and user.is_banned:
-            await event.bot.send_message(chat_id=user.id,text=
-                "❌ Вы заблокированы и не можете использовать бота.\n"
-                "Для разблокировки обратитесь к администратору."
-            )
-            return  # Прерываем обработку
         return await handler(event, data)
