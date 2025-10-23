@@ -22,32 +22,24 @@ async def handle_channel_post(message: types.Message, db: AsyncSession,):
         service = MessagesService(session=db, messages=[message], is_aiogram=True)
         await service.service_and_save_messages()
     except Exception as e:
-        logger.error(f'Ошибка сохранения перехваченных постов из группы: {message.chat.id}', exc_info=True)
-    #
-    # # Информация о канале (чате)
-    # channel_info = (
-    #     f'channel_id: {message.chat.id},\n'
-    #     f'channel_title: {message.chat.title},\n'
-    #     f'channel_username: {message.chat.username},\n'
-    #     f'message_id: {message.message_id},\n'
-    #     f'date: {message.date},\n'
-    #     f'text: {message.text},\n'
-    #     f'content_type: {message.content_type},\n '
-    #     f'caption: {message.caption}\n'
-    #     f'media_group_id: {message.media_group_id},\n'
-    # )
-    # channel_id = message.chat.id
-    # channel_username = message.chat.username
-    # message_id = message.message_id
-    # print(channel_info)
-    # print('____________________________________')
-    # if message.text or message.caption:
-    #     await message.bot.forward_message(-1003179370474, -1003179370474, message.message_id)
+        logger.error(
+            'Ошибка сохранения перехваченного поста: {} из группы - {}'.format(
+                message.chat.id, e
+            )
+        )
 
-
-# @channel_listener.edited_channel_post()
-# async def handle_edited_channel_post(edited_channel_post: types.Message):
-#     """
-#     Обработчик для отредактированных сообщений в канале
-#     """
-#     print(f"Сообщение отредактировано: {edited_channel_post.text}")
+@channel_listener.edited_channel_post()
+async def handle_edited_channel_post(edited_channel_post: types.Message,  db: AsyncSession,):
+    """
+    Обработчик для отредактированных сообщений в канале
+    """
+    logger.info('Перехвачено сообщение из канала {}'.format(edited_channel_post.chat.id))
+    try:
+        service = MessagesService(session=db, messages=[edited_channel_post], is_aiogram=True)
+        await service.service_and_save_messages()
+    except Exception as e:
+        logger.error(
+            'Ошибка сохранения отредактированного поста: {} из группы - {}'.format(
+                edited_channel_post.chat.id, e
+            )
+        )
