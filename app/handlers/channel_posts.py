@@ -14,7 +14,7 @@ logger.info(f'Инициализируем роутер {__name__}')
 channel_listener = Router()
 
 @channel_listener.channel_post()
-async def handle_channel_post(message: types.Message, db: AsyncSession,):
+async def handle_channel_post(message: types.Message, db: AsyncSession, tg_user: User):
     """Получение базовой информации о сообщении в канале"""
 
     logger.info(f'Перехвачено сообщение из канала {message.chat.id}')
@@ -29,7 +29,7 @@ async def handle_channel_post(message: types.Message, db: AsyncSession,):
         )
 
 @channel_listener.edited_channel_post()
-async def handle_edited_channel_post(edited_channel_post: types.Message,  db: AsyncSession,):
+async def handle_edited_channel_post(edited_channel_post: types.Message,  db: AsyncSession, tg_user: User):
     """
     Обработчик для отредактированных сообщений в канале
     """
