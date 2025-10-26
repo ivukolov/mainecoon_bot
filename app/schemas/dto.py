@@ -70,7 +70,7 @@ class TelegramUserDTO(BaseModel):
 
     # Основные идентификаторы
     id: int = Field(..., description="Логин")
-    username: Optional[str] = Field(..., description="Логин")
+    username: str = Field(..., description="Логин")
     first_name: Optional[str] = Field(default=None, description="Имя")
     last_name: Optional[str] = Field(default=None, description="Фамилия")
     # Контактная информация
