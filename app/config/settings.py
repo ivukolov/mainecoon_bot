@@ -13,6 +13,9 @@ ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent
 TEMP_DIR: Final[Path] = ROOT_DIR / "tmp"
 # Используется для имени web админки интерфейса
 PROJECT_NAME: Final[str] = 'Кото-Вет помощник'
+# Crone
+## Время запуска обновления информации о постах и польхователях
+TG_GROUP_UPDATE_TIME: Final[tuple[int, int]] = (11, 30) # Часы, минуты
 
 # Telegram.
 ## ПАРАМЕТРЫ АДМИНИСТРАТОРА КАНАЛА
