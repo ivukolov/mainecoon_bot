@@ -30,25 +30,16 @@ class UserMiddleware(BaseMiddleware):
                     'role': UserRole.BOT if telegram_user.is_bot else UserRole.USER,
                     'username': username,
                 })
+                if user.is_banned:
+                    await event.bot.send_message(
+                        chat_id=telegram_user.id, text=
+                        "❌ Вы заблокированы и не можете использовать бота.\n"
+                        "Для разблокировки обратитесь к администратору."
+                    )
+                    return  # Прерываем обработку
                 data["tg_user"] = user
         except Exception:
             logger.error(
-                'Middleware error. Во время получения информации о пользователе возникла ошибка', exc_info=True
+                'Middleware error. Во время получения информации о пользователе возникла ошибка'
             )
-        return await handler(event, data)
-
-class BanMiddleware(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-        event: Message | CallbackQuery,
-        data: Dict[str, Any]
-    ) -> Any:
-        user: User = data['tg_user']
-        if user and user.is_banned:
-            await event.bot.send_message(chat_id=user.id,text=
-                "❌ Вы заблокированы и не можете использовать бота.\n"
-                "Для разблокировки обратитесь к администратору."
-            )
-            return  # Прерываем обработку
         return await handler(event, data)

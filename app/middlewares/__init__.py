@@ -3,4 +3,3 @@ from middlewares.db import DatabaseMiddleware
 from middlewares.teletone import TeletonClientMiddleware
 from middlewares.users import UserMiddleware
 from middlewares.ads_middleware import CatAdsServiceMiddleware
-from middlewares.users import BanMiddleware

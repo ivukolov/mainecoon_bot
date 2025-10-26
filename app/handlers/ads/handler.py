@@ -84,7 +84,7 @@ async def ads_menu(message: Message, db: AsyncSession, tg_user: User, state: FSM
 
 
 @ads_router.message(CatForm.name)
-async def ads_process_name(message: Message, state: FSMContext):
+async def ads_process_name(message: Message, state: FSMContext, tg_user: User):
     """Обработка имени"""
     try:
         name = CatAdsSchema(name=message.text)
@@ -99,7 +99,7 @@ async def ads_process_name(message: Message, state: FSMContext):
 
 
 @ads_router.message(CatForm.gender)
-async def ads_process_gender(message: Message, state: FSMContext):
+async def ads_process_gender(message: Message, state: FSMContext, tg_user: User):
     """Обработка пола"""
     cat_genders: set = CatGenders.get_values()
     if message.text in cat_genders:
@@ -116,7 +116,7 @@ async def ads_process_gender(message: Message, state: FSMContext):
 
 
 @ads_router.message(CatForm.birth_date)
-async def ads_process_birth_date(message: Message, state: FSMContext) -> Message:
+async def ads_process_birth_date(message: Message, state: FSMContext, tg_user: User) -> Message:
     """Обработка даты рождения"""
     try:
         CatAdsSchema(birth_date=message.text)
@@ -130,7 +130,7 @@ async def ads_process_birth_date(message: Message, state: FSMContext) -> Message
 
 
 @ads_router.message(CatForm.color)
-async def ads_process_color(message: Message, state: FSMContext):
+async def ads_process_color(message: Message, state: FSMContext, tg_user: User):
     """Обработка окраса"""
     try:
         CatAdsSchema(color=message.text)
@@ -145,7 +145,7 @@ async def ads_process_color(message: Message, state: FSMContext):
 
 
 @ads_router.message(CatForm.cattery)
-async def ads_process_cattery(message: Message, state: FSMContext) -> Message:
+async def ads_process_cattery(message: Message, state: FSMContext, tg_user: User) -> Message:
     """Обработка питомника"""
     try:
         CatAdsSchema(cattery=message.text)
@@ -159,7 +159,7 @@ async def ads_process_cattery(message: Message, state: FSMContext) -> Message:
 
 
 @ads_router.message(CatForm.price)
-async def process_price(message: Message, state: FSMContext) -> Message:
+async def process_price(message: Message, state: FSMContext, tg_user: User) -> Message:
     """Обработка цены"""
     try:
         CatAdsSchema(price=message.text)
@@ -173,7 +173,7 @@ async def process_price(message: Message, state: FSMContext) -> Message:
 
 
 @ads_router.message(CatForm.contacts)
-async def ads_process_contacts(message: Message, state: FSMContext) -> Message:
+async def ads_process_contacts(message: Message, state: FSMContext, tg_user: User) -> Message:
     """Обработка контактов"""
     try:
         CatAdsSchema(contacts=message.text)
@@ -188,7 +188,7 @@ async def ads_process_contacts(message: Message, state: FSMContext) -> Message:
 
 @ads_router.message(CatForm.photo, F.media_group_id)
 @media_group_handler()
-async def ads_process_photos(messages: List[Message], state: FSMContext, cat_ads_service: CatAdsService) -> None:
+async def ads_process_photos(messages: List[Message], state: FSMContext, cat_ads_service: CatAdsService, tg_user: User) -> None:
     """Обработка медиа группы"""
     # Получаем данные из FSM
     data = await state.get_data()
@@ -206,7 +206,7 @@ async def ads_process_photos(messages: List[Message], state: FSMContext, cat_ads
 
 
 @ads_router.message(CatForm.photo, F.photo)
-async def ads_process_photo(message: Message, state: FSMContext, cat_ads_service: CatAdsService) -> None:
+async def ads_process_photo(message: Message, state: FSMContext, cat_ads_service: CatAdsService, tg_user: User) -> None:
     """Обработка фото"""
     # Получаем фотографии самого лучшего качества
     # photo_id = message.photo[-1].file_id
