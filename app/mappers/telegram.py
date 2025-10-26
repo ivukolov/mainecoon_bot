@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from database.users.roles import UserRole
 from schemas import dto
 from schemas.dto import TelegramUsersListDTO
+from utils.identifiers import generate_uuid_from_str
 
 logger = getLogger(__name__)
 
@@ -128,10 +129,10 @@ class TelegramUserMapper:
         """Конвертирует telethon сущность в DTO."""
 
         user_type = TelegramUserMapper._get_entity_type(entity)
-
+        username = entity.username or generate_uuid_from_str(name=str(entity.id))
         return dto.TelegramUserDTO(
             id=entity.id,
-            username=getattr(entity, 'username', None),
+            username=username,
             first_name=getattr(entity, 'first_name', None),
             last_name=getattr(entity, 'last_name', None),
             contact=getattr(entity, 'contact', None),
