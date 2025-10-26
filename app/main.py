@@ -20,6 +20,7 @@ from middlewares import (
 )
 from clients.teletone import TeletonClientManager
 from utils.cache import RedisCache
+from utils.schedules import every_day_schedule
 from web.app import run_fastapi
 from config import settings
 from handlers import routers
@@ -61,6 +62,7 @@ async def main():
         async with asyncio.TaskGroup() as tg:
             tg.create_task(run_fastapi())
             tg.create_task(run_bot(dp, bot))
+            tg.create_task(every_day_schedule(teleton_manager=tt_client_manager, db=session_factory()))
     except KeyboardInterrupt:
         logger.info("Shutting down")
     except TelegramServerError:
