@@ -1,9 +1,9 @@
 server {
     listen 80;
     server_name ${DOMAIN_NAME};
-    if ($allow_access = block) {
-        return 403;
-    }
+       if ($allow_access = 0) {
+            return 403 "Access denied. Your country: $geoip2_country_code";
+        }
 
     location / {
         return 301 http://$server_name/admin/;
