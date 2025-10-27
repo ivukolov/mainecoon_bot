@@ -3,10 +3,7 @@ FROM nginx:alpine
 # Устанавливаем geoip для защиты
 RUN apk add --no-cache wget && \
     mkdir -p /usr/share/GeoIP && \
-    wget -O /tmp/GeoIP.dat.gz "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country&license_key=YOUR_LICENSE_KEY&suffix=tar.gz" && \
-    tar -xzf /tmp/GeoIP.dat.gz -C /tmp --strip-components=1 && \
-    mv /tmp/GeoLite2-Country.mmdb /usr/share/GeoIP/ && \
-    rm -rf /tmp/* && \
+    wget -O /usr/share/GeoIP/GeoIP.dat "https://download.db-ip.com/free/dbip-country-lite-$(date +%Y-%m).dat" && \
     apk del wget
 
 # Создаем директорию для скриптов
