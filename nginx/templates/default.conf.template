@@ -1,6 +1,9 @@
 server {
     listen 80;
     server_name ${DOMAIN_NAME};
+    if ($allowed_country = no) {
+        return 403;
+    }
 
     location / {
         return 301 http://$server_name/admin/;
