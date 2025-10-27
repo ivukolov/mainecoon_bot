@@ -1,6 +1,10 @@
 FROM nginx:alpine
 
 # Устанавливаем geoip для защиты
+RUN apk add --no-cache nginx-module-geoip libmaxminddb && \
+    mkdir -p /usr/share/GeoIP
+
+# Скачиваем базы geoip
 RUN apk add --no-cache wget libmaxminddb && \
     mkdir -p /usr/share/GeoIP && \
     wget -O /tmp/dbip-country-lite.mmdb.gz "https://download.db-ip.com/free/dbip-country-lite-$(date +%Y-%m).mmdb.gz" && \
