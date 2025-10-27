@@ -2,6 +2,7 @@ FROM nginx:alpine
 ## https://thomaswildetech.com/blog/2025/03/16/nginx-in-docker-with-geoip/ Огромная благодарность автору!
 # Устанвока пакетов
 RUN apk add --no-cache \
+    wget \
     build-base \
     pcre-dev \
     zlib-dev \
@@ -23,6 +24,10 @@ RUN cd nginx-$(nginx -v 2>&1 | awk -F/ '{print $2}') && \
     make modules && \
     cp objs/ngx_http_geoip2_module.so /etc/nginx/modules/
 
+RUN wget -O /tmp/dbip-country-lite.mmdb.gz "https://download.db-ip.com/free/dbip-country-lite-$(date +%Y-%m).mmdb.gz" && \
+    gunzip -c /tmp/dbip-country-lite.mmdb.gz > /usr/share/GeoIP/GeoLite2-Country.mmdb && \
+    rm /tmp/dbip-country-lite.mmdb.gz && \
+    apk del wget
 # Очистка
 RUN rm -rf /var/cache/apk/* nginx-* ngx_http_geoip2_module
 
