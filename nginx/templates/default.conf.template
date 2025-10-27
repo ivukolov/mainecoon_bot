@@ -1,7 +1,7 @@
 server {
     listen 80;
     server_name ${DOMAIN_NAME};
-    if ($allowed_country = no) {
+    if ($block_access = yes) {
         return 403;
     }
 
