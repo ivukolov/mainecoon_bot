@@ -3,10 +3,9 @@ server {
     server_name ${DOMAIN_NAME};
 
     location / {
-        add_header Content-Type text/plain;
-        return 200 "IP: $remote_addr\nCountry: $geoip2_country_code\nAccess: $allow_access";
-        # return 301 http://$server_name/admin/;
+        return 301 http://$server_name/admin/;
     }
+
     location /admin/ {
         proxy_pass http://sqladmin_backend;
         proxy_set_header Host $host;
