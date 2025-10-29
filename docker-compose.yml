@@ -9,7 +9,6 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/white_list.conf:/etc/nginx/conf.d/white_list.conf
       - ./app/logs/nginx/:/var/log/nginx/
       - ./nginx/templates/:/etc/nginx/templates/
       - ./nginx/ssl:/etc/nginx/ssl
