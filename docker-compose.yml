@@ -31,6 +31,8 @@ services:
     env_file:
       - .env
     entrypoint: bash -c "alembic upgrade head && python main.py"
+    expose:
+      - "8000"
 #    ports:
 #      - "8000"
     volumes:
@@ -53,6 +55,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/backups/:/backups/
+    expose:
+      - "5432"
 #    ports:
 #      - "5432:5432"
     healthcheck:
@@ -68,6 +72,8 @@ services:
     image: redis:7-alpine
     container_name: mainecoon_redis
     restart: unless-stopped
+    expose:
+      - "6379"
 #    ports:
 #      - "6379:6379"
     volumes:
