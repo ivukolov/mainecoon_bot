@@ -75,7 +75,7 @@ async def cmd_settings(message: Message):
         "Добрый день! Меню в разработке!",
     )
 
-@commands_router.message(Command("info"))
+@commands_router.message(Command("profile"))
 async def cmd_info(message: Message, tg_user: User):
     """Получение информации об аккаунте пользователя"""
     invited_users = User.invited_users_count
