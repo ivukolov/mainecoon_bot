@@ -1,0 +1,48 @@
+# Виртуальные окружения
+.venv
+venv
+env
+
+# Кэш Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Pip и UV
+.pip
+.uv
+.cache
+
+# Тесты и покрытие
+.pytest_cache
+.coverage
+htmlcov/
+.tox
+.nox
+tests/
+test_*
+*_test.py
+
+# Логи
+*.log
+logs/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Environment файлы
+.env
+.env.local
