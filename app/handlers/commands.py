@@ -78,7 +78,7 @@ async def cmd_settings(message: Message):
 @commands_router.message(Command("profile"))
 async def cmd_info(message: Message, tg_user: User):
     """Получение информации об аккаунте пользователя"""
-    invited_users = User.invited_users_count
+    invited_users = tg_user.invited_users_count
     return await message.answer(
         f"Профиль: {tg_user.first_name} {tg_user.last_name}\n"
         f"Кол-во приглашённых пользователей: {invited_users}\n",
