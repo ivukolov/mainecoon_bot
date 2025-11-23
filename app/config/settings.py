@@ -170,11 +170,11 @@ LOGGING_CONFIG = {
     },
     # Список модулей проекта, для детальной настройки.
     'loggers': {
-        '': {  # root logger
-            'handlers': ['console', 'file_error', 'file_info'],
-            'level': 'INFO',
-            'propagate': False,
-        },
+        # '': {  # root logger
+        #     'handlers': ['console', 'file_error', 'file_info'],
+        #     'level': 'INFO',
+        #     'propagate': False,
+        # },
         'handlers': {
             'handlers': ['console', 'file_error'],
             'level': 'INFO',
@@ -186,6 +186,11 @@ LOGGING_CONFIG = {
             'propagate': False,
         },
         'utils': {
+            'handlers': ['console', 'file_debug'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'middlewares': {
             'handlers': ['console', 'file_debug'],
             'level': 'INFO',
             'propagate': False,
