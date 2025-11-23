@@ -5,7 +5,7 @@ import typing as t
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from aiogram.filters import CommandStart, CommandObject
+from aiogram.filters import CommandStart, CommandObject, Command
 from sqlalchemy.ext.asyncio import AsyncSession
 import sqlalchemy.exc as sa_exc
 
@@ -59,4 +59,27 @@ async def cancel_from_any_state(message: Message, tg_user: User, state: FSMConte
     await message.answer(
         "✅ Возвращяемся в главное меню",
         reply_markup=main_menu_kb()
+    )
+
+@commands_router.message(Command("help"))
+async def cmd_help(message: Message):
+    """Получение справочной информации"""
+    return await message.answer(
+        "Добрый день! Меню в разработке!",
+    )
+
+@commands_router.message(Command("settings"))
+async def cmd_settings(message: Message):
+    """Настройки аккаунта"""
+    return await message.answer(
+        "Добрый день! Меню в разработке!",
+    )
+
+@commands_router.message(Command("info"))
+async def cmd_info(message: Message, tg_user: User):
+    """Получение информации об аккаунте пользователя"""
+    invited_users = User.invited_users_count
+    return await message.answer(
+        f"Профиль: {tg_user.first_name} {tg_user.last_name}\n"
+        f"Кол-во приглашённых пользователей: {invited_users}\n",
     )
